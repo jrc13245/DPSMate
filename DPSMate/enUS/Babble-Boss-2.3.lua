@@ -222,6 +222,20 @@ local bosses = {
 	["Wolf Master Nandos"] = true,
 	["Rend Blackhand"] = true,
 	["Kurinnaxx"] = true,
+
+	-- From Zae for Kara 40
+	["Keeper Gnarlmoon"] = true,
+	["Ley-Watcher Incantagos"] = true,
+	["Anomalus"] = true,
+	["Echo of Medivh"] = true,
+	["King"] = true,
+	["Queen"] = true,
+	["Bishop"] = true,
+	["Rook"] = true,
+	["Sanv Tas'dal"] = true,
+	["Rupturan the Broken"] = true,
+	["Kruul"] = true,
+	["Mephistroth"] = true,
 }
 
 BabbleBoss = {}
