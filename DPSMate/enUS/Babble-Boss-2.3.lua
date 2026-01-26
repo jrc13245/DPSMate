@@ -236,6 +236,18 @@ local bosses = {
 	["Rupturan the Broken"] = true,
 	["Kruul"] = true,
 	["Mephistroth"] = true,
+	["Master Blacksmith Rolfen"] = true,
+    ["Brood Queen Araxxna"] = true,
+    ["Grizikil"] = True,
+    ["Clawlord Howlfang"] = true,
+    ["Lord Blackwald II"] = true,
+    ["Moroes"] = true,
+	["Incindis"] = true,
+    ["Basalthar"] = true,
+    ["Smoldaris"] = true,
+	["Sorcerer-Thane Thaurissan"] = true,
+    ["Solnius"] = true,
+    ["Erennius"] = true,
 }
 
 BabbleBoss = {}
