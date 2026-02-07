@@ -522,7 +522,8 @@ if (GetLocale() == "zhCN") then
 	DPSMate.L["ttthreat"] = " 仇恨"
 	
 	
-	-- Updating preloaded configs
+	-- Updating preloaded configs (deferred until frames exist)
+	DPSMate.L.UpdateFrameTexts = function()
 	local _G = getglobal
 	local prestr = "DPSMate_ConfigMenu_"
 	-- Menu
@@ -902,4 +903,5 @@ if (GetLocale() == "zhCN") then
 	DPSMate.Options.Options[5]["args"]["people"]["desc"] = DPSMate.L["certainnamesdesc"]
 	DPSMate.Options.Options[5]["args"]["group"]["name"] = DPSMate.L["grouponly"]
 	DPSMate.Options.Options[5]["args"]["group"]["desc"] = DPSMate.L["grouponlydesc"]
+	end
 end

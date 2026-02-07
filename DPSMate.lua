@@ -121,11 +121,15 @@ local DPSHist = {}
 function DPSMate:OnLoad()
 	SLASH_DPSMate1 = "/dps"
 	SlashCmdList["DPSMate"] = function(msg) DPSMate:SlashCMDHandler(msg) end
-	
+
 	DPSMate:UpdatePointer()
-	
+
 	DPSMate:InitializeFrames()
 	DPSMate.Options:InitializeConfigMenu()
+
+	if DPSMate.L.UpdateFrameTexts then
+		DPSMate.L.UpdateFrameTexts()
+	end
 end
 
 function DPSMate:UpdatePointer()

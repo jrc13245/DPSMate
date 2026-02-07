@@ -520,7 +520,8 @@ DPSMate.L["ttabsorbed"] = "흡수된"
 DPSMate.L["ttabsorb"] = " 흡수"    
 DPSMate.L["ttthreat"] = " 위협"     
 	
-	-- Updating preloaded configs
+	-- Updating preloaded configs (deferred until frames exist)
+	DPSMate.L.UpdateFrameTexts = function()
 	local _G = getglobal
 	local prestr = "DPSMate_ConfigMenu_"
 	-- Menu
@@ -900,4 +901,5 @@ DPSMate.L["ttthreat"] = " 위협"
 	DPSMate.Options.Options[5]["args"]["people"]["desc"] = DPSMate.L["certainnamesdesc"]
 	DPSMate.Options.Options[5]["args"]["group"]["name"] = DPSMate.L["grouponly"]
 	DPSMate.Options.Options[5]["args"]["group"]["desc"] = DPSMate.L["grouponlydesc"]
+	end
 end
