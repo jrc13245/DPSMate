@@ -124,6 +124,7 @@ function ChatThrottleLib.PipeBin:Tidy()
 		return;
 	end
 		
+	local n
 	if(self.count > 100) then
 		n=self.count-90;
 	else

@@ -93,8 +93,8 @@ function DPSMate.Modules.OHealingTaken:EvalTable(user, k)
 					i = i + 1
 				end
 			end
-			total=total+arr[user[1]]["i"]
 		end
+		total=total+arr[user[1]]["i"]
 	end
 	return a, total, d
 end

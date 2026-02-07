@@ -38,7 +38,9 @@ end
 
 function DPSMate.Modules.DetailsDeaths:EvalTable(cname)
 	local arr = {}
-	for cat, val in db[DPSMateUser[cname or DetailsUser][1]] do -- user
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid or not db[uid[1]] then return arr end
+	for cat, val in db[uid[1]] do -- user
 		if val["i"][1] == 1 then
 			tinsert(arr, {val[1][1], val["i"][2], val})
 		end
@@ -97,15 +99,15 @@ function DPSMate.Modules.DetailsDeaths:SelectDetailsButton(i, comp)
 	end
 	_G("DPSMate_Details_"..comp.."Deaths_Log_ScrollButton"..i.."_selected"):Show()
 	
-	for i=1, 20 do
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_Time"):SetText()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_CombatTime"):SetText()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_Cause"):SetText()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_Cause"):SetTextColor()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_Ability"):SetText()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_Type"):SetText()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_HealIn"):SetText()
-		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..i.."_DamageIn"):SetText()
+	for j=1, 20 do
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_Time"):SetText()
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_CombatTime"):SetText()
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_Cause"):SetText()
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_Cause"):SetTextColor(1, 1, 1, 1)
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_Ability"):SetText()
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_Type"):SetText()
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_HealIn"):SetText()
+		_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..j.."_DamageIn"):SetText()
 	end
 	for cat, val in uArr[i][3] do
 		if cat~="i" then

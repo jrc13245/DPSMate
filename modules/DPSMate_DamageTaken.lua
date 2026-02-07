@@ -59,7 +59,7 @@ end
 function DPSMate.Modules.DamageTaken:EvalTable(user, k)
 	local a, d = {}, {}
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do
 		if cat~="i" then
 			local ta, tb, CV = {}, {}, 0
@@ -116,7 +116,7 @@ function DPSMate.Modules.DamageTaken:GetSettingValues(arr, cbt, k,ecbt)
 		if DPSMateSettings["columnsdmgtaken"][1] then str[1] = " "..DPSMate:Commas(dmg, k)..p; strt[2] = DPSMate:Commas(tot, k)..pt end
 		if DPSMateSettings["columnsdmgtaken"][2] then str[3] = "("..strformat("%.1f", dmg/cbt)..")"; strt[1] = "("..strformat("%.1f", (tot/cbt))..pt..")" end
 		if DPSMateSettings["columnsdmgtaken"][3] then str[2] = " ("..strformat("%.1f", 100*dmgr/totr).."%)" end 
-		if DPSMateSettings["columnsdmg"][4] then str[4] = " ("..strformat("%.1f", dmg/(ecbt[pname] or cbt))..p..")" end
+		if DPSMateSettings["columnsdmgtaken"][4] then str[4] = " ("..strformat("%.1f", dmg/(ecbt[pname] or cbt))..p..")" end
 		tinsert(name, pname)  
 		tinsert(value, str[3]..str[1]..str[4]..str[2])
 		tinsert(perc, 100*(dmgr/sortr))

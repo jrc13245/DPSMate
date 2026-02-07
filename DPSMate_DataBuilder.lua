@@ -131,6 +131,7 @@ DPSMate.DB.abilitylen = 0
 
 -- Local Variables
 local CombatState = false
+local combatStartTime = 0
 local cheatCombat = 0
 local UpdateTime = 0.125
 local LastUpdate = 0
@@ -201,20 +202,18 @@ local tablemodes = {"total","current"}
 if not GameTime_GT then
 	GameTime_GT = function()
 		local hour, minutes = GetGameTime()
-		if hour>12 then
-			hour = mod(hour, 12)
-			if minutes<10 then
-				return hour..":0"..minutes.." PM"
-			else
-				return hour..":"..minutes.." PM"
-			end
+		local suffix = "AM"
+		if hour >= 12 then
+			suffix = "PM"
+		end
+		hour = mod(hour, 12)
+		if hour == 0 then
+			hour = 12
+		end
+		if minutes<10 then
+			return hour..":0"..minutes.." "..suffix
 		else
-			hour = mod(hour, 12)
-			if minutes<10 then
-				return hour..":0"..minutes.." AM"
-			else
-				return hour..":"..minutes.." AM"
-			end
+			return hour..":"..minutes.." "..suffix
 		end
 	end
 end
@@ -533,6 +532,7 @@ DPSMate.DB.VARIABLES_LOADED = function()
 				bcfail = false,
 				bcrw = false,
 				targetscale=0.58,
+				mainupdatetime = 1.5,
 				hideonlogin = false,
 				reportdelay = false
 			}
@@ -612,7 +612,6 @@ DPSMate.DB.VARIABLES_LOADED = function()
 		if DPSMate.Modules.LiftMagicReceived then DPSMate.Modules.LiftMagicReceived.DB = DPSMateDispels end
 		if DPSMate.Modules.Interrupts then DPSMate.Modules.Interrupts.DB = DPSMateInterrupts end
 		if DPSMate.Modules.AurasGained then DPSMate.Modules.AurasGained.DB = DPSMateAurasGained end
-		if DPSMate.Modules.AurasLost then DPSMate.Modules.AurasLost.DB = DPSMateAurasGained end
 		if DPSMate.Modules.AurasLost then DPSMate.Modules.AurasLost.DB = DPSMateAurasGained end
 		if DPSMate.Modules.AurasUptimers then DPSMate.Modules.AurasUptimers.DB = DPSMateAurasGained end
 		if DPSMate.Modules.Procs then DPSMate.Modules.Procs.DB = DPSMateAurasGained end
@@ -781,6 +780,7 @@ DPSMate.DB.PLAYER_REGEN_DISABLED = function()
 	DPSMate.Options:HideWhenSolo()
 	if (not CombatState and cheatCombat<GT()) then
 		DPSMate.Options:NewSegment()
+		combatStartTime = GT()
 	end
 	CombatState = true
 end
@@ -899,7 +899,7 @@ function DPSMate.DB:OnGroupUpdate()
 				DPSMateUser[pet][6] = DPSMateUser[name][1]
 				DPSMate.Parser.TargetParty[pet] = type.."pet"..i
 			end
-			if pet and not DPSMate.Parser.TargetParty[pet] then -- LAYT ???
+			if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not DPSMate.Parser.TargetParty[pet] then -- LAYT ???
 				DPSMateUser[pet][4] = false
 				DPSMateUser[pet][6] = ""
 				DPSMateUser[name][5] = ""
@@ -984,7 +984,6 @@ DPSMate.DB.specialAbTrans = {
 	["earthshock"] = "Earth Shock",
 	["mindblast"] = "Mind Blast",
 	["holyshield"] = "Holy Shield",
-	["heroicstrike"] = "Heroic Strike",
 	["thunderfury"] = "Thunderfury",
 	["graceofearth"] = "Grace of Earth",
 	["blackamnesty"] = "Black Amnesty",
@@ -994,7 +993,7 @@ DPSMate.DB.KTMHOOK = {}
 DPSMate.DB.ktmavail = false
 
 function DPSMate.DB:UpdateThreat()
-	if self.KTMHOOK ~= {} then
+	if next(self.KTMHOOK) ~= nil then
 		local str
 		for cat, val in pairs(self.KTMHOOK) do
 			local curNpc, curNpcNum = {}, 0
@@ -1025,13 +1024,6 @@ function DPSMate.DB:UpdateThreat()
 	end
 end
 
-local defaultThreat = {
-				[1] = 0, -- Amount
-				[2] = 0, -- Min
-				[3] = 0, -- Max
-				[4] = 0, -- Hits
-				["i"] = {}
-			}
 function DPSMate.DB:Threat(cause, spellname, target, value, amount)
 	if value==0 then return end
 	if not DPSMate.RegistredModules["threat"] then return end
@@ -1046,7 +1038,13 @@ function DPSMate.DB:Threat(cause, spellname, target, value, amount)
 			DPSThreat[cat][cause][target] = {}
 		end
 		if not DPSThreat[cat][cause][target][spellname] then
-			DPSThreat[cat][cause][target][spellname] = defaultThreat
+			DPSThreat[cat][cause][target][spellname] = {
+				[1] = 0,
+				[2] = 0,
+				[3] = 0,
+				[4] = 0,
+				["i"] = {}
+			}
 		end
 		local path = DPSThreat[cat][cause][target][spellname]
 		path[1] = path[1] + value
@@ -1194,9 +1192,10 @@ local hackOrder, hackOrder2 = {}, {}
 function DPSMate.DB:DamageDone(Duser, Dname, Dhit, Dcrit, Dmiss, Dparry, Ddodge, Dresist, Damount, Dglance, Dblock)
 	Duser = self:BuildUser(Duser)
 	
-	if (not CombatState and cheatCombat<GT()) then
+	if (not CombatState and cheatCombat<GT() and UnitAffectingCombat("player")) then
 		DPSMate.Options:NewSegment()
 		CombatState = true
+		combatStartTime = GT()
 	end
 	
 	if Dname == AAttack and NextSwing[Duser] and NextSwing[Duser][1]>0 then
@@ -1403,7 +1402,8 @@ function DPSMate.DB:EnemyDamage(mode, arr, Duser, Dname, Dhit, Dcrit, Dmiss, Dpa
 	
 	for cat=1,2 do 
 		gen = arr[cat]
-		if not gen or not gen[cause] then gen[cause] = {} end
+		if not gen then arr[cat] = {}; gen = arr[cat] end
+		if not gen[cause] then gen[cause] = {} end
 		gen = gen[cause]
 		if not gen[Duser] then
 			gen[Duser] = {i = 0}
@@ -1748,7 +1748,7 @@ function DPSMate.DB:GetAbsorbingShield(ability, abilityTarget, cate)
 			end
 		end
 		
-		if AAS~={} or ASS~={} then
+		if next(AAS) ~= nil or next(ASS) ~= nil then
 			local unit, buff = DPSMate.Parser:GetUnitByName(abilityTarget)
 			if unit then
 				for i=1, 32 do
@@ -2076,7 +2076,7 @@ local AwaitKick = {}
 local AfflictedStun = {}
 function DPSMate.DB:AwaitAfflicted(cause, ability, target, time)
 	for cat, val in pairs(AfflictedStun) do
-		if val[1]==cause and ((val[4]+0.5)<=time or (val[4]-0.5)>=time) then
+		if val[1]==cause and (val[4]+0.5)>=time and (val[4]-0.5)<=time then
 			return
 		end
 	end
@@ -2227,7 +2227,7 @@ function DPSMate.DB:DestroyBuffs(target, ability)
 	target = self:BuildUser(target)
 	ability = self:BuildAbility(ability)
 	local TL
-	for cat, val in pairs(tablemodes) do 
+	for cat, val in pairs(tablemodes) do
 		if not DPSAurasGained[cat][target] then
 			DPSAurasGained[cat][target] = {}
 		end
@@ -2237,7 +2237,7 @@ function DPSMate.DB:DestroyBuffs(target, ability)
 				[1] = {},
 				[2] = {},
 				[3] = {},
-				[4] = bool,
+				[4] = false,
 				[5] = 0,
 				[6] = 0,
 			}
@@ -2266,7 +2266,8 @@ function DPSMate.DB:UpdatePlayerCBT(cbt)
 	local notInCombat = true
 	local type = "raid"
 	local num = GetNumRaidMembers()
-	local cbt1, cbt2 =DPSCBT["effective"] and DPSCBT["effective"][1] or 0, DPSCBT["effective"] and DPSCBT["effective"][2] or 0
+	if not DPSCBT["effective"] then return true end
+	local cbt1, cbt2 = DPSCBT["effective"][1], DPSCBT["effective"][2]
 	if num<=0 then
 		type = "party"
 		num = GetNumPartyMembers()
@@ -2281,7 +2282,7 @@ function DPSMate.DB:UpdatePlayerCBT(cbt)
 		if UnitAffectingCombat(type..i) or UnitAffectingCombat(type.."pet"..i) then
 			name = UnitName(type..i)
 			cbt1[name] = (cbt1 and cbt1[name] or 0) + cbt
-			cbt2[name] = (cbt1 and cbt2[name] or 0) + cbt
+			cbt2[name] = (cbt2 and cbt2[name] or 0) + cbt
 			notInCombat = false
 		end
 	end
@@ -2295,7 +2296,7 @@ function DPSMate.DB:OnUpdate()
 	if (CombatState) then
 		notInCombat = false
 		LastUpdate = LastUpdate + arg1
-		if LastUpdate>=UpdateTime then
+		if LastUpdate>=(DPSMateSettings["mainupdatetime"] or 1.5) then
 			cbtpt = DPSCBT["effective"]
 			DPSCBT["total"] = (DPSCBT["total"] and DPSCBT["total"] or 0 )+ LastUpdate
 			DPSCBT["current"] = (DPSCBT["current"] and DPSCBT["current"] or 0 )+ LastUpdate
@@ -2316,7 +2317,7 @@ function DPSMate.DB:OnUpdate()
 			LastUpdate = 0
 		end
 		
-		if notInCombat then 
+		if notInCombat and (GT() - combatStartTime) > 3 then
 			CombatState = false
 		end
 
@@ -2330,9 +2331,9 @@ function DPSMate.DB:OnUpdate()
 	else
 		self.MainUpdate = self.MainUpdate + arg1
 	end
-	if NeedUpdate then
+	if NeedUpdate or CombatState then
 		MainLastUpdate = MainLastUpdate + arg1
-		if MainLastUpdate>=MainUpdateTime then
+		if MainLastUpdate>=(DPSMateSettings["mainupdatetime"] or 1.5) then
 			self:UpdateKicks()
 			if self.ktmavail then
 				self:UpdateThreat()

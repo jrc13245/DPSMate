@@ -113,7 +113,7 @@ function DPSMate.Modules.Deaths:EvalTable(user, k, id)
 	local a, b, total = {}, {}, 0
 	local arr = DPSMate:GetMode(k)
 	local p = 1
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	if arr[user[1]][1] then 
 		if arr[user[1]][1]["i"][1]~=1 then p=2 else p=1 end 
 		if arr[user[1]][id or p] then 

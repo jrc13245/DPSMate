@@ -2774,7 +2774,7 @@
 			</Frame>
 			
 			<Frame name="$parent_Tab_GeneralOptions" inherits="DPSMate_Template_Box" hidden="true">
-				<Size x="301" y="250" />
+				<Size x="301" y="280" />
 				<Anchors>
 					<Anchor point="LEFT" relativeTo="$parent_Menu" relativePoint="RIGHT" />
 				</Anchors>
@@ -3050,9 +3050,29 @@
 							</OnLoad>
 						</Scripts>
 					</Slider>
+					<Slider name="$parent_UpdateInterval" inherits="DPSMate_Template_Slider">
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeTo="$parent_Segments" relativePoint="BOTTOMLEFT">
+								<Offset x="0" y="-20" />
+							</Anchor>
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								this.aide = DPSMate.L["updateintervalTooltip"]
+								this.func = function()
+									DPSMateSettings["mainupdatetime"] = this:GetValue()
+								end
+								this:SetMinMaxValues(0.016,2.0)
+								this:SetValueStep(0.016)
+								getglobal(this:GetName().."Text"):SetText(DPSMate.L["updateinterval"])
+								getglobal(this:GetName().."Low"):SetText("0.016")
+								getglobal(this:GetName().."High"):SetText("2.0")
+							</OnLoad>
+						</Scripts>
+					</Slider>
 				</Frames>
 			</Frame>
-			
+
 			<ScrollFrame name="$parent_Tab_Columns" inherits="DPSMate_Template_Box" hidden="true">
 				<Size x="301" y="250" />
 				<Anchors>

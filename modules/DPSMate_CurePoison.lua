@@ -91,7 +91,7 @@ end
 function DPSMate.Modules.CurePoison:EvalTable(user, k)
 	local a, b, total, temp = {}, {}, 0, {}
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do -- 41 Ability
 		if cat~="i" then
 			for ca, va in pairs(val) do -- 3 Target
@@ -163,7 +163,7 @@ function DPSMate.Modules.CurePoison:ShowTooltip(user,k)
 		end
 		
 		for cat, val in pairs(a) do
-			i = 1
+			local i = 1
 			while true do
 				if not abn[i] then
 					tinsert(abn, i, {cat, val})
@@ -178,7 +178,7 @@ function DPSMate.Modules.CurePoison:ShowTooltip(user,k)
 			end
 		end
 		for cat, val in pairs(b) do
-			i = 1
+			local i = 1
 			while true do
 				if not abnt[i] then
 					tinsert(abnt, i, {cat, val})

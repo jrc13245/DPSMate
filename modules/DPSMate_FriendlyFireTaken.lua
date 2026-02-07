@@ -54,7 +54,7 @@ end
 function DPSMate.Modules.FriendlyFireTaken:EvalTable(user, k)
 	local a, d, total, temp = {}, {}, 0, {}
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for c, v in arr[user[1]] do
 		local cName = DPSMate:GetUserById(c)
 		local CV = 0

@@ -60,7 +60,8 @@ function DPSMate.Modules.DTPS:EvalTable(user, k, cbt)
 	local a, d = {}, {}
 	local arr, cbet = DPSMate:GetMode(k)
 	cbt = cbt or cbet
-	if not arr[user[1]] then return end
+	if not cbt or cbt == 0 then cbt = 1 end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do
 		if cat~="i" then
 			local ta, tb, CV = {}, {}, 0

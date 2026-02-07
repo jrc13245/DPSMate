@@ -26,7 +26,7 @@ end
 
 function DPSMate.Modules.DetailsCastsTotal:EvalTable()
 	local z, b = {}, {}
-	for cat, _ in DPSMateDamageDone[curKey] do
+	for cat, _ in DPSMateEDT[curKey] do
 		local user = DPSMate:GetUserById(cat)
 		if DPSMate:ApplyFilter(curKey, user) then
 			local a,_,c = DPSMate.Modules.Casts:EvalTable(DPSMateUser[DPSMate:GetUserById(cat)], curKey)

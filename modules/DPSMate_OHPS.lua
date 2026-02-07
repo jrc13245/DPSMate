@@ -44,8 +44,9 @@ end
 function DPSMate.Modules.OHPS:EvalTable(user, k, cbt)
 	local a, d = {}, {}
 	local arr, cbet = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	cbt = cbt or cbet
+	if not cbt or cbt == 0 then cbt = 1 end
 	for cat, val in pairs(arr[user[1]]) do
 		if cat~="i" then
 			local i = 1

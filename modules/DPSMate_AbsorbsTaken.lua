@@ -71,7 +71,7 @@ function DPSMate.Modules.AbsorbsTaken:GetSortedTable(arr,k)
 												end
 											end
 										end
-										if DPSMateEDT[1][cat] and p==5 or p==0 then
+										if DPSMateEDT[1][cat] and (p==5 or p==0) then
 											if DPSMateEDT[1][cat][cet] then
 													--DPSMate:SendMessage("ZERO TEST BEFORE//"..DPSMate:GetAbilityById(qq))
 												if DPSMateEDT[1][cat][cet][qq] then
@@ -126,6 +126,7 @@ end
 function DPSMate.Modules.AbsorbsTaken:EvalTable(user, k)
 	local arr = DPSMate:GetMode(k)
 	local b, a, total = {}, {}, 0
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in arr[user[1]] do -- 28 Target
 		local ownername = DPSMate:GetUserById(cat)
 		local PerTargetAbsorb, ta, tb = 0, {}, {}

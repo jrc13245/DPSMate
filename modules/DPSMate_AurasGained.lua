@@ -67,6 +67,7 @@ end
 function DPSMate.Modules.AurasGained:EvalTable(user, k)
 	local a, b, temp, total = {}, {}, {}, 0
 	local arr = DPSMate:GetMode(k)
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do -- 3 Ability
 		local CV = 0
 		for ca, va in pairs(val) do -- each one

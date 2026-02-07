@@ -142,6 +142,16 @@ function DPSMate:SlashCMDHandler(msg)
 			DPSMate.Options:Unlock()
 		elseif cmd == "config" then
 			DPSMate_ConfigMenu:Show()
+		elseif cmd == "reset" then
+			DPSMate:SendMessage(DPSMate.L["resetconfirm"])
+		elseif cmd == "resetconfirm" then
+			DPSMateUser = {}
+			DPSMateAbility = {}
+			DPSMate.DB.abilitylen = 1
+			DPSMate.DB.userlen = 1
+			DPSMate.UserId = {}
+			DPSMate.Options:PopUpAccept(true, true)
+			DPSMate:SendMessage(DPSMate.L["resetdone"])
 		elseif cmd == "showAll" then
 			for _, val in DPSSettings["windows"] do DPSMate.Options:Show(getglobal("DPSMate_"..val["name"])) end
 		elseif cmd == "hideAll" then
@@ -176,6 +186,7 @@ function DPSMate:SlashCMDHandler(msg)
 			DPSMate:SendMessage(DPSMate.L["slashshow"])
 			DPSMate:SendMessage(DPSMate.L["slashhide"])
 			DPSMate:SendMessage(DPSMate.L["slashconfig"])
+			DPSMate:SendMessage(DPSMate.L["slashreset"])
 		end
 	end
 end
@@ -350,6 +361,7 @@ function DPSMate:TableLength(t)
 	if (t) then
 		count = getn(t)
 		if count<=1 then
+			count = 0
 			for _,_ in pairs(t) do
 				count = count + 1
 			end
@@ -398,9 +410,69 @@ end
 function DPSMate:CopyTable(t)
 	local s={}
 	for cat, val in pairs(t) do
-		s[cat] = val
+		if type(val) == "table" then
+			s[cat] = self:CopyTable(val)
+		else
+			s[cat] = val
+		end
 	end
 	return s
+end
+
+function DPSMate:CopyTableStripInstant(t, depth)
+	local s={}
+	depth = depth or 0
+	for cat, val in pairs(t) do
+		if depth >= 2 and cat == "i" then
+			-- Skip ["i"] instant-damage dictionaries at ability level
+		elseif type(val) == "table" then
+			s[cat] = self:CopyTableStripInstant(val, depth + 1)
+		else
+			s[cat] = val
+		end
+	end
+	return s
+end
+
+function DPSMate:PruneStaleUsers()
+	-- Collect all user IDs referenced in active metric data and history
+	local activeIds = {}
+	local metrics = {DPSMateDamageDone, DPSMateDamageTaken, DPSMateEDD, DPSMateEDT, DPSMateTHealing, DPSMateEHealing, DPSMateOverhealing, DPSMateHealingTaken, DPSMateEHealingTaken, DPSMateOverhealingTaken, DPSMateAbsorbs, DPSMateDispels, DPSMateDeaths, DPSMateInterrupts, DPSMateAurasGained, DPSMateThreat, DPSMateFails, DPSMateCCBreaker}
+	-- Check active data (mode [1] and [2])
+	for _, metric in pairs(metrics) do
+		if metric then
+			for mode = 1, 2 do
+				if metric[mode] then
+					for uid, _ in pairs(metric[mode]) do
+						activeIds[uid] = true
+					end
+				end
+			end
+		end
+	end
+	-- Check history segments
+	for cat, segments in pairs(DPSMateHistory) do
+		if cat ~= "names" and type(segments) == "table" then
+			for _, segment in pairs(segments) do
+				if type(segment) == "table" then
+					for uid, _ in pairs(segment) do
+						activeIds[uid] = true
+					end
+				end
+			end
+		end
+	end
+	-- Remove users whose IDs aren't referenced anywhere
+	local removed = 0
+	for name, data in pairs(DPSMateUser) do
+		if data[1] and not activeIds[data[1]] then
+			DPSMateUser[name] = nil
+			removed = removed + 1
+		end
+	end
+	if removed > 0 then
+		self.UserId = nil
+	end
 end
 
 function DPSMate:GetUserById(id)
@@ -517,8 +589,8 @@ end
 
 function DPSMate:strrev(str)
 	local res, len = {}, strlen(str)
-	for i=0, len-1 do
-		res[i] = strsub(str, len-i, len-i)
+	for i=1, len do
+		res[i] = strsub(str, len-i+1, len-i+1)
 	end
 	return tconcat(res);
 end
@@ -564,7 +636,7 @@ function DPSMate:ApplyFilter(key, name)
 	local class = DPSMateUser[name][2] or "warrior"
 	local path = DPSSettings["windows"][key]
 	if path["grouponly"] then
-		if not DPSMate.Parser.TargetParty[name] and DPSMate.Parser.TargetParty ~= {} then
+		if not DPSMate.Parser.TargetParty[name] and next(DPSMate.Parser.TargetParty) ~= nil then
 			return false
 		end
 	end
@@ -572,7 +644,7 @@ function DPSMate:ApplyFilter(key, name)
 	if path["filterpeople"] ~= "" then
 		-- Certain people
 		t = {}
-		strgsub(path["filterpeople"], "(.-),", func)
+		strgsub(path["filterpeople"]..",", "(.-),", func)
 		for cat, val in pairs(t) do
 			if name == val then
 				return true
@@ -697,7 +769,7 @@ end
 function DPSMate:Broadcast(type, who, what, with, value, failtype)
 	if DPSSettings["broadcasting"] then
 		if IsRaidLeader() or IsRaidOfficer() then
-			ch = "RAID"
+			local ch = "RAID"
 			if DPSSettings["bcrw"] then
 				ch = "RAID_WARNING"
 			end

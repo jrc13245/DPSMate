@@ -100,6 +100,7 @@ end
 function DPSMate.Modules.Procs:EvalTable(user, k)
 	local a, b, temp, total = {}, {}, {}, 0
 	local arr = DPSMate:GetMode(k)
+	if not arr[user[1]] then return a, b, total end
 	for cat, val in pairs(arr[user[1]]) do -- 3 Ability
 		local name = DPSMate:GetAbilityById(cat)
 		if (DPSMate.Parser.procs[name] and val[4]) or self.nonProcProcs[name] or DPSMate.Parser.DmgProcs[name] then

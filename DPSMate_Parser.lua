@@ -104,7 +104,6 @@ DPSMate.Parser.procs = {
 	["Speed"] = true,
 	["Invulnerability"] = true,
 	["Aura of the Blue Dragon"] = true, -- Mana Darkmoon card
-	["Invulnerability"] = true,
 	["Battle Squawk"] = true,
 	["Devilsaur Fury"] = true,
 	["Furious Howl"] = true,
@@ -182,8 +181,7 @@ DPSMate.Parser.procs = {
 	["Nature's Swiftness"] = true,
 	["Ancestral Healing"] = true,
 	["Reincarnation"] = true,
-	["Elemental Mastery"] = true,
-	
+
 	-- Warlock
 	["Vampirism"] = true,
 	["Nightfall"] = true,

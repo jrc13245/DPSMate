@@ -482,6 +482,7 @@ function DPSMate.Options:InitializeConfigMenu()
 	DPSMate_ConfigMenu_Tab_GeneralOptions_MergePets:SetChecked(DPSMateSettings["mergepets"])
 	DPSMate_ConfigMenu_Tab_GeneralOptions_Segments:SetValue(DPSMateSettings["datasegments"])
 	DPSMate_ConfigMenu_Tab_GeneralOptions_TargetScale:SetValue(DPSMateSettings["targetscale"])
+	DPSMate_ConfigMenu_Tab_GeneralOptions_UpdateInterval:SetValue(DPSMateSettings["mainupdatetime"] or 1.5)
 	
 	-- Tab Columns
 	for i=1, 4 do
@@ -827,9 +828,9 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 				},
 			}
 			
-			--DPSMate:UpdatePointer()
-			--DPSMate.DB:UpdatePointer()
-			
+			DPSMate:UpdatePointer()
+			DPSMate.DB:UpdatePointer()
+
 			-- Get buffs of people after reset
 			local type = "party"
 			local num = GetNumPartyMembers()
@@ -880,8 +881,8 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 			DPSMateCCBreaker[2] = {}
 			DPSMateCombatTime["current"] = 0.0001
 			
-			--DPSMate:UpdatePointer()
-			--DPSMate.DB:UpdatePointer()
+			DPSMate:UpdatePointer()
+			DPSMate.DB:UpdatePointer()
 		end
 		
 		if DPSMate.Modules.DPS then DPSMate.Modules.DPS.DB = DPSMateDamageDone end
@@ -915,7 +916,6 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 		if DPSMate.Modules.LiftMagicReceived then DPSMate.Modules.LiftMagicReceived.DB = DPSMateDispels end
 		if DPSMate.Modules.Interrupts then DPSMate.Modules.Interrupts.DB = DPSMateInterrupts end
 		if DPSMate.Modules.AurasGained then DPSMate.Modules.AurasGained.DB = DPSMateAurasGained end
-		if DPSMate.Modules.AurasLost then DPSMate.Modules.AurasLost.DB = DPSMateAurasGained end
 		if DPSMate.Modules.AurasLost then DPSMate.Modules.AurasLost.DB = DPSMateAurasGained end
 		if DPSMate.Modules.AurasUptimers then DPSMate.Modules.AurasUptimers.DB = DPSMateAurasGained end
 		if DPSMate.Modules.Procs then DPSMate.Modules.Procs.DB = DPSMateAurasGained end
@@ -1586,7 +1586,7 @@ function DPSMate.Options:InializePlayerDewDrop(obj)
 			type = "execute",
 			name = val,
 			desc = DPSMate.L["reportdetails"],
-			func = loadstring('DPSMate.Options:ReportUserDetails(DPSMate.Options.Dewdrop:GetOpenedParent(), "'..val..'"); DPSMate.Options.Dewdrop:Close()'),
+			func = (function(v) return function() DPSMate.Options:ReportUserDetails(DPSMate.Options.Dewdrop:GetOpenedParent(), v); DPSMate.Options.Dewdrop:Close() end end)(val),
 		}
 	end
 	
@@ -1595,29 +1595,19 @@ function DPSMate.Options:InializePlayerDewDrop(obj)
 	path = DPSMate.Options.Options[4]["args"]["compare"]["args"]
 	local Key = obj:GetParent():GetParent():GetParent().Key
 	local db,cbt = DPSMate:GetMode(Key)
-	local temp = ''
+	local temp = {}
 	local a = DPSMate:GetSettingValues(db, cbt, Key, 0)
 	for cat, name in a do
 		if name and name ~= obj.user then
 			if DPSMateSettings["windows"][Key]["grouponly"] then
 				if DPSMate.Parser.TargetParty[name] then
-					if temp=='' then
-						temp = '"'..name..'"'
-					else
-						temp = temp..',"'..name..'"'
-					end
+					tinsert(temp, name)
 				end
 			else
-				if temp=='' then
-					temp = '"'..name..'"'
-				else
-					temp = temp..',"'..name..'"'
-				end
+				tinsert(temp, name)
 			end
 		end
 	end
-	-- No clue what is wrong here. Fuck it
-	temp = assert(loadstring('return {'..temp..'}')) ();
 	sort(temp)
 	
 	local mode = _G(obj:GetParent():GetParent():GetParent():GetName().."_Head_Font"):GetText()
@@ -1633,7 +1623,7 @@ function DPSMate.Options:InializePlayerDewDrop(obj)
 				type = "execute",
 				name = "|cFF"..hexClassColor[DPSMateUser[val][2] or "warrior"]..val.."|r",
 				desc = DPSMate.L["opendetails"],
-				func = loadstring('DPSMate.Options:UpdateDetails(nil, "'..val..'", "'..obj:GetName()..'"); DPSMate.Options.Dewdrop:Close()'),
+				func = (function(v, n) return function() DPSMate.Options:UpdateDetails(nil, v, n); DPSMate.Options.Dewdrop:Close() end end)(val, obj:GetName()),
 			}
 		end
 	end
@@ -1704,17 +1694,18 @@ function DPSMate.Options:NewSegment(segname)
 		DPSMateCCBreaker[2] = {}
 		DPSMateCombatTime["current"] = 0.0001
 		DPSMateCombatTime["effective"][2] = {}
+		DPSMate:PruneStaleUsers()
 		DPSMate:SetStatusBarValue()
 	end
 end
 
 function DPSMate.Options:CreateSegment(name)
 	-- Need to add a new check
-	local modes = {["DMGDone"] = DPSMateDamageDone[2], ["DMGTaken"] = DPSMateDamageTaken[2], ["EDDone"] = DPSMateEDD[2], ["EDTaken"] = DPSMateEDT[2], ["THealing"] = DPSMateTHealing[2], ["EHealing"] = DPSMateEHealing[2], ["OHealing"] = DPSMateOverhealing[2], ["EHealingTaken"] = DPSMateEHealingTaken[2], ["THealingTaken"] = DPSMateHealingTaken[2], ["Absorbs"] = DPSMateAbsorbs[2], ["Deaths"] = DPSMateDeaths[2], ["Interrupts"] = DPSMateInterrupts[2], ["Dispels"] = DPSMateDispels[2], ["Auras"] = DPSMateAurasGained[2]}
+	local modes = {["DMGDone"] = DPSMateDamageDone[2], ["DMGTaken"] = DPSMateDamageTaken[2], ["EDDone"] = DPSMateEDD[2], ["EDTaken"] = DPSMateEDT[2], ["THealing"] = DPSMateTHealing[2], ["EHealing"] = DPSMateEHealing[2], ["OHealing"] = DPSMateOverhealing[2], ["EHealingTaken"] = DPSMateEHealingTaken[2], ["THealingTaken"] = DPSMateHealingTaken[2], ["OHealingTaken"] = DPSMateOverhealingTaken[2], ["Absorbs"] = DPSMateAbsorbs[2], ["Deaths"] = DPSMateDeaths[2], ["Interrupts"] = DPSMateInterrupts[2], ["Dispels"] = DPSMateDispels[2], ["Auras"] = DPSMateAurasGained[2], ["Threat"] = DPSMateThreat[2], ["Fail"] = DPSMateFails[2], ["CCBreaker"] = DPSMateCCBreaker[2]}
 	
-	tinsert(DPSMateHistory["names"], 1, name.." - "..GameTime_GetTime())
+	tinsert(DPSMateHistory["names"], 1, name.." - "..GameTime_GT())
 	for cat, val in pairs(modes) do
-		tinsert(DPSMateHistory[cat], 1, DPSMate:CopyTable(val))
+		tinsert(DPSMateHistory[cat], 1, DPSMate:CopyTableStripInstant(val))
 		if DPSMate:TableLength(DPSMateHistory[cat])>DPSMateSettings["datasegments"] then
 			for i=DPSMateSettings["datasegments"]+1, DPSMate:TableLength(DPSMateHistory[cat]) do
 				tremove(DPSMateHistory[cat], i)
@@ -1925,7 +1916,11 @@ function DPSMate.Options:CopyConfiguration()
 		local toKey = _G("DPSMate_"..toName).Key
 		for cat, val in pairs(DPSMateSettings["windows"][fromKey]) do
 			if cat~="name" and cat~="options" then
-				DPSMateSettings["windows"][toKey][cat] = val
+				if type(val) == "table" then
+					DPSMateSettings["windows"][toKey][cat] = DPSMate:CopyTable(val)
+				else
+					DPSMateSettings["windows"][toKey][cat] = val
+				end
 			end
 		end
 		DPSMate:InitializeFrames()

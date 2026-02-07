@@ -494,7 +494,7 @@ end
 ----------------------------------------------------------------------------------
 
 function DPSMate.Sync:DMGTakenAllIn(arg2, arg4)
-	userid = DPSMateUser[arg4][1]
+	userid = DB:BuildUser(arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
 	Arrays[2][userid] = {
@@ -503,7 +503,7 @@ function DPSMate.Sync:DMGTakenAllIn(arg2, arg4)
 end
 
 function DPSMate.Sync:DMGTakenStatIn(arg2, arg4)
-	userid = DPSMateUser[arg4][1]
+	userid = DB:BuildUser(arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
 	abid = DB:BuildAbility(t[3])
@@ -520,7 +520,7 @@ end
 function DPSMate.Sync:DMGTakenAbilityIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid2, userid = DB:BuildUser(t[1]), DPSMateUser[arg4][1]
+	userid2, userid = DB:BuildUser(t[1]), DB:BuildUser(arg4)
 	if not Arrays[2][userid] then return end
 	if not Arrays[2][userid][userid2] then
 		Arrays[2][userid][userid2] = {}
@@ -564,7 +564,7 @@ function DPSMate.Sync:EDAllIn(arr, arg2, arg4)
 	if not Arrays[arr][userid] then
 		Arrays[arr][userid] = {}
 	end
-	Arrays[arr][userid][DPSMateUser[arg4][1]] = {
+	Arrays[arr][userid][DB:BuildUser(arg4)] = {
 		i = tnbr(t[2]),
 	}
 end
@@ -572,7 +572,7 @@ end
 function DPSMate.Sync:EDStatIn(arr, arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2, abid = DB:BuildUser(t[1]), DPSMateUser[arg4][1], DB:BuildAbility(t[4])
+	userid, userid2, abid = DB:BuildUser(t[1]), DB:BuildUser(arg4), DB:BuildAbility(t[4])
 	if not Arrays[arr][userid] then return end
 	if not Arrays[arr][userid][userid2] then return end
 	if not Arrays[arr][userid][userid2][abid] then return end
@@ -585,7 +585,7 @@ end
 function DPSMate.Sync:EDAbilityIn(arr, arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2 = DB:BuildUser(t[1]), DPSMateUser[arg4][1]
+	userid, userid2 = DB:BuildUser(t[1]), DB:BuildUser(arg4)
 	if not Arrays[arr][userid] then return end
 	if not Arrays[arr][userid][userid2] then return end
 	Arrays[arr][userid][userid2][DB:BuildAbility(t[2])] = {
@@ -707,7 +707,7 @@ end
 function DPSMate.Sync:iAbsorbsIn(arg2, arg4) 
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2, userid3 = DPSMateUser[arg4][1], DB:BuildUser(t[1]), DB:BuildAbility(t[2])
+	userid, userid2, userid3 = DB:BuildUser(arg4), DB:BuildUser(t[1]), DB:BuildAbility(t[2])
 	if not Arrays[10][userid] then
 		Arrays[10][userid] = {}
 	end
@@ -732,9 +732,9 @@ end
 function DPSMate.Sync:AbsorbsStatIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2 = DPSMateUser[arg4][1], DB:BuildUser(t[1])
-	if not DPSMateAbsorbs[1][userid] then return end
-	if not DPSMateAbsorbs[1][userid][userid2] then return end
+	userid, userid2 = DB:BuildUser(arg4), DB:BuildUser(t[1])
+	if not Arrays[10][userid] then return end
+	if not Arrays[10][userid][userid2] then return end
 	t[2] = tnbr(t[2])
 	if t[2]>DPSMateCombatTime["total"] and (t[2]>5*DPSMateCombatTime["total"] or t[2]>20000) then return end
 	if t[4] then
@@ -748,7 +748,7 @@ end
 function DPSMate.Sync:AbsorbsIn(arg2, arg4) 
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2, userid3, userid4 = DPSMateUser[arg4][1], DB:BuildUser(t[1]), DB:BuildAbility(t[2]), DB:BuildUser(t[4])
+	userid, userid2, userid3, userid4 = DB:BuildUser(arg4), DB:BuildUser(t[1]), DB:BuildAbility(t[2]), DB:BuildUser(t[4])
 	local val = tnbr(t[3])
 	if not Arrays[10][userid] then return end
 	if not Arrays[10][userid][userid2] then return end
@@ -766,7 +766,7 @@ end
 function DPSMate.Sync:DeathsAllIn(arg2, arg4) 
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid = DPSMateUser[arg4][1]
+	userid = DB:BuildUser(arg4)
 	if not Arrays[11][userid] then
 		Arrays[11][userid] = {}
 	end
@@ -803,7 +803,7 @@ end
 function DPSMate.Sync:InterruptsAllIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	Arrays[12][DPSMateUser[arg4][1]] = {
+	Arrays[12][DB:BuildUser(arg4)] = {
 		i = {
 			[1] = tnbr(t[2]),
 			[2] = {}
@@ -814,7 +814,7 @@ end
 function DPSMate.Sync:InterruptsAbilityIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2, userid3 = DPSMateUser[arg4][1],DB:BuildAbility(t[1]), DB:BuildUser(t[2])
+	userid, userid2, userid3 = DB:BuildUser(arg4),DB:BuildAbility(t[1]), DB:BuildUser(t[2])
 	if not Arrays[12][userid] then return end
 	if not Arrays[12][userid][userid2] then
 		Arrays[12][userid][userid2] = {}
@@ -832,7 +832,7 @@ end
 function DPSMate.Sync:iDispelsIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid = DPSMateUser[arg4][1]
+	userid = DB:BuildUser(arg4)
 	if not Arrays[13][userid] then Arrays[13][userid] = {i={[1]=0,[2]={}}} end
 	Arrays[13][userid]["i"][1] = tnbr(arg2);
 end
@@ -840,8 +840,8 @@ end
 function DPSMate.Sync:DispelsIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2, userid3 = DPSMateUser[arg4][1], DB:BuildAbility(t[1]), DB:BuildUser(t[2])
-	if not Arrays[13][userid] then Arrays[13][DPSMateUser[arg4][1]] = {i={[1]=0,[2]={}}} end
+	userid, userid2, userid3 = DB:BuildUser(arg4), DB:BuildAbility(t[1]), DB:BuildUser(t[2])
+	if not Arrays[13][userid] then Arrays[13][userid] = {i={[1]=0,[2]={}}} end
 	if not Arrays[13][userid][userid2] then
 		Arrays[13][userid][userid2] = {}
 	end
@@ -858,7 +858,7 @@ end
 function DPSMate.Sync:AurasAllIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, userid2 = DPSMateUser[arg4][1], DB:BuildAbility(t[1])
+	userid, userid2 = DB:BuildUser(arg4), DB:BuildAbility(t[1])
 	if not Arrays[14][userid] then
 		Arrays[14][userid] = {}
 	end
@@ -878,16 +878,17 @@ end
 function DPSMate.Sync:AurasStartEndIn(arg2, arg4, prefix)
 	t = {}
 	strgsub(arg2, "(.-),", func)
+	userid = DB:BuildUser(arg4)
 	abid = DB:BuildAbility(t[1])
-	if not Arrays[14][DPSMateUser[arg4][1]] then return end
-	if not Arrays[14][DPSMateUser[arg4][1]][abid] then return end
-	Arrays[14][DPSMateUser[arg4][1]][abid][prefix][tnbr(t[2])] = tnbr(t[3])
+	if not Arrays[14][userid] then return end
+	if not Arrays[14][userid][abid] then return end
+	Arrays[14][userid][abid][prefix][tnbr(t[2])] = tnbr(t[3])
 end
 
 function DPSMate.Sync:AurasCauseIn(arg2, arg4)
 	t = {}
 	strgsub(arg2, "(.-),", func)
-	userid, abid = DPSMateUser[arg4][1], DB:BuildAbility(t[1])
+	userid, abid = DB:BuildUser(arg4), DB:BuildAbility(t[1])
 	if not Arrays[14][userid] then return end
 	if not Arrays[14][userid][abid] then return end
 	Arrays[14][userid][abid][3][DB:BuildUser(t[2])] = tnbr(t[3])
@@ -1436,10 +1437,20 @@ end
 
 function DPSMate.Sync:ThreatIn(arg2,arg4)
 	if not arg2 then return end
-	for cat, val in pairs(loadstring("return {"..arg2.."}")()) do
-		for ca, va in pairs(val) do
-			for c,v in pairs(va) do
-				DB:Threat(arg4, cat, ca, v, 1)
+	-- Sanitize input: only allow table constructors with safe characters (alphanumeric, brackets, commas, equals, quotes, dots, spaces, minus)
+	if string.find(arg2, "[^%w%s%[%]{},=\"'%.%-_]") then return end
+	local fn = loadstring("return {"..arg2.."}")
+	if not fn then return end
+	local ok, result = pcall(fn)
+	if not ok or type(result) ~= "table" then return end
+	for cat, val in pairs(result) do
+		if type(val) == "table" then
+			for ca, va in pairs(val) do
+				if type(va) == "table" then
+					for c,v in pairs(va) do
+						DB:Threat(arg4, cat, ca, v, 1)
+					end
+				end
 			end
 		end
 	end

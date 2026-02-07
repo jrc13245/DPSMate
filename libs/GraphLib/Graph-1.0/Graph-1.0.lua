@@ -38,8 +38,8 @@ local math_sin = math.sin
 local math_deg = math.deg
 local math_atan = math.atan
 local math_abs = math.abs
-local math_fmod = math.fmod
-local math_huge = math.huge
+local math_fmod = math.mod or math.fmod
+local math_huge = 1/0
 local table_remove = table.remove
 local table_insert = table.insert
 local string_format = string.format
@@ -1136,7 +1136,7 @@ function GraphFunctions:RealtimeSetWidth(Width)
 		self.BarHeight[i] = 0
 	end
 
-	local SizeOfBarsUsed = table.maxn(self.BarsUsing)
+	local SizeOfBarsUsed = table.getn(self.BarsUsing)
 
 	if Width > SizeOfBarsUsed then
 		for i = SizeOfBarsUsed + 1, Width do

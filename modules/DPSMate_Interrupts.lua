@@ -67,19 +67,19 @@ function DPSMate.Modules.Interrupts:GetSortedTable(arr,k)
 				local i = 1
 				while true do
 					if (not b[i]) then
-						tinsert(b, i, val["i"][1])
+						tinsert(b, i, CV)
 						tinsert(a, i, cat)
 						break
 					else
-						if b[i] < val["i"][1] then
-							tinsert(b, i, val["i"][1])
+						if b[i] < CV then
+							tinsert(b, i, CV)
 							tinsert(a, i, cat)
 							break
 						end
 					end
 					i=i+1
 				end
-				total = total + val["i"][1]
+				total = total + CV
 			end
 		end
 	end
@@ -89,8 +89,9 @@ end
 function DPSMate.Modules.Interrupts:EvalTable(user, k)
 	local a, b, total, pet, u = {}, {}, 0, false, {}
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
-	if (user[5] and user[5] ~= DPSMate.L["unknown"] and arr[DPSMateUser[user[5]][1]]) and DPSMateSettings["mergepets"] and DPSMateUser[name][5]~=name then u={user[1],DPSMateUser[user[5]][1]} else u={user[1]} end
+	if not arr[user[1]] then return {}, 0, {} end
+	local name = DPSMate:GetUserById(user[1])
+	if (user[5] and user[5] ~= DPSMate.L["unknown"] and arr[DPSMateUser[user[5]][1]]) and DPSMateSettings["mergepets"] and user[5]~=name then u={user[1],DPSMateUser[user[5]][1]} else u={user[1]} end
 	for _, vvv in pairs(u) do
 		for cat, val in pairs(arr[vvv]) do -- 41 Ability
 			if cat~="i" then

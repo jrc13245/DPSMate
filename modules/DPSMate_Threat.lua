@@ -50,7 +50,7 @@ end
 function DPSMate.Modules.Threat:EvalTable(user, k)
 	local a,d, total = {}, {}, 0
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in arr[user[1]] do -- targets
 		local CV, e, q = 0, {}, {}
 		for ca, va in val do -- ability

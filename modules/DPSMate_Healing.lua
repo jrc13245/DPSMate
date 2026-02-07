@@ -55,7 +55,7 @@ end
 function DPSMate.Modules.Healing:EvalTable(user, k)
 	local a, d = {}, {}
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do
 		if cat~="i" then
 			local i = 1

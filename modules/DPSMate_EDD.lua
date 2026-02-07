@@ -70,7 +70,7 @@ end
 function DPSMate.Modules.EDD:EvalTable(user, k)
 	local a, temp, d, total = {}, {}, {}, 0
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do
 		local ta, td = {}, {}
 		for ca, va in pairs(val) do
@@ -124,7 +124,7 @@ function DPSMate.Modules.EDD:GetSettingValues(arr, cbt, k,ecbt)
 		local pname = DPSMate:GetUserById(a[cat])
 		if DPSMateSettings["columnsedd"][1] then str[1] = " "..DPSMate:Commas(dmg, k)..p; strt[2] = DPSMate:Commas(tot, k)..pt end
 		if DPSMateSettings["columnsedd"][3] then str[2] = " ("..strformat("%.1f", 100*dmgr/totr).."%)" end
-		if DPSMateSettings["columnsedd"][2] then str[3] = "("..strformat("%.1f", dmg/cbt)..p..")" strt[1] = "("..strformat("%.1f", (tot/cbt))..pt..")" end
+		if DPSMateSettings["columnsedd"][2] then str[3] = "("..strformat("%.1f", dmg/cbt)..p..")"; strt[1] = "("..strformat("%.1f", (tot/cbt))..pt..")" end
 		if DPSMateSettings["columnsedd"][4] then str[4] = " ("..strformat("%.1f", dmg/(ecbt[pname] or cbt))..p..")" end
 		tinsert(name, pname) 
 		tinsert(value, str[3]..str[1]..str[4]..str[2])

@@ -50,8 +50,9 @@ end
 function DPSMate.Modules.TPS:EvalTable(user, k, cbt)
 	local a,d, total = {}, {}, 0
 	local arr, cbet = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	cbt = cbt or cbet
+	if not cbt or cbt == 0 then cbt = 1 end
 	for cat, val in arr[user[1]] do -- targets
 		local CV, e, q = 0, {}, {}
 		for ca, va in val do -- ability

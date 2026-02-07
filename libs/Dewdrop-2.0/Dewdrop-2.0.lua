@@ -1612,7 +1612,7 @@ function OpenSlider(self, parent)
 			level.lastVDirection = "UP"
 			dirty = true
 		end
-	elseif sliderFrame:GetTop() > GetScreenWidth() then
+	elseif sliderFrame:GetTop() > GetScreenHeight() then
 		level.lastVDirection = "DOWN"
 		dirty = true
 	end
@@ -1707,7 +1707,7 @@ function OpenEditBox(self, parent)
 					result = editBoxFrame.parent.editBoxValidateFunc(a1, a2, a3, a4, editBox:GetText() or "")
 				end
 				if not result then
-					message("Validation error: [" .. tostring(text) .. "]")
+					message("Validation error: [" .. tostring(editBox:GetText()) .. "]")
 					return
 				end
 			end
@@ -1822,7 +1822,7 @@ function OpenEditBox(self, parent)
 			level.lastVDirection = "UP"
 			dirty = true
 		end
-	elseif editBoxFrame:GetTop() > GetScreenWidth() then
+	elseif editBoxFrame:GetTop() > GetScreenHeight() then
 		level.lastVDirection = "DOWN"
 		dirty = true
 	end
@@ -1968,13 +1968,13 @@ function Open(self, parent, func, level, value, point, relativePoint, cursorX, c
 			frame:ClearAllPoints()
 			relativePoint = relativePoint or point
 			if point == "LEFT" or point == "RIGHT" then
-				if curX < GetScreenHeight() / 2 then
+				if curY < GetScreenHeight() / 2 then
 					point = point .. "BOTTOM"
 				else
 					point = point .. "TOP"
 				end
 			elseif point == "CENTER" then
-				if curX < GetScreenHeight() / 2 then
+				if curY < GetScreenHeight() / 2 then
 					point = "BOTTOM"
 				else
 					point = "TOP"
@@ -2138,8 +2138,8 @@ function Dewdrop:Close(level)
 		editBoxFrame:Hide()
 	end
 	for i = level, table.getn(levels) do
-		Clear(self, levels[level])
-		levels[level]:Hide()
+		Clear(self, levels[i])
+		levels[i]:Hide()
 		levels[i]:ClearAllPoints()
 		levels[i]:SetPoint("CENTER", UIParent, "CENTER")
 	end

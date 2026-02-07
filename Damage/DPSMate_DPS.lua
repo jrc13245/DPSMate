@@ -43,7 +43,6 @@ function DPSMate.Modules.DPS:GetSortedTable(arr,k)
 					if DPSMateSettings["mergepets"] and DPSMateUser[DPSMateUser[name][5]] and arr[DPSMateUser[DPSMateUser[name][5]][1]] and name~=DPSMateUser[name][5] then
 						CV=CV+arr[DPSMateUser[DPSMateUser[name][5]][1]]["i"]
 					end
-					a[CV] = name
 					local i = 1
 					while true do
 						if (not b[i]) then
@@ -131,7 +130,7 @@ function DPSMate.Modules.DPS:ShowTooltip(user,k)
 		local edtaken, edtakenPet = {}, {}
 	
 		-- Getting the value of the pet
-		while a[i] do
+		while a and a[i] do
 			if c[i][2] then
 				pet = pet + c[i][1]
 			end

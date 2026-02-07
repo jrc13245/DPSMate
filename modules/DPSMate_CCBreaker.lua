@@ -83,7 +83,7 @@ function DPSMate.Modules.CCBreaker:EvalTable(user, k)
 	local a, b, total = {}, {}, 0
 	local temp = {}
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
+	if not arr[user[1]] then return {}, 0, {} end
 	for _, v in arr[user[1]] do
 		if temp[v[1]] then temp[v[1]] = temp[v[1]] + 1 else temp[v[1]] = 1 end
 		total=total+1
