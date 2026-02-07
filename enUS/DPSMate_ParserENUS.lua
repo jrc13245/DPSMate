@@ -760,7 +760,7 @@ function DPSMate.Parser:PeriodicDamage(msg)
 	end
 end
 
-local FPDList = {" hits ", " crits ", " was ", " is parried by ", " missed ", " misses ", " is absorbed by ", " fail", " is reflected back ", " immune "}
+local FPDList = {" hits ", " crits ", " was ", " is parried by ", " missed ", " misses ", " is absorbed by ", " fail", " is reflected back ", " immune ", " causes "}
 local FPDList2 = {" begins to cast ", " begins to perform ", " is killed by ", " casts ", " performs "}
 function DPSMate.Parser:FriendlyPlayerDamage(msg)
 	local i,j,k = 0,0,0;
@@ -839,7 +839,33 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 				if choice == 8 then return end -- fails
 				if choice == 9 then return end -- is reflected back
 				if choice == 10 then return end -- immune
-				
+
+				if choice == 11 then -- causes (Soul Link, Blessing of Sacrifice, etc.)
+					local si, _, amountStr = strfind(msg, "(%d+) damage%.", k)
+					if si then
+						local amount = tnbr(amountStr)
+						local target = strsub(msg, k, si-2)
+
+						if target == "you" then target = Player end
+
+						local prefixAmount, prefixCase, _ = GetPrefix(msg, si)
+						if prefixCase and prefixCase == "absorbed" then
+							DB:SetUnregisterVariables(prefixAmount, ability, source)
+						end
+
+						DB:EnemyDamage(true, nil, source, ability, 1, 0, 0, 0, 0, 0, amount, target, 0, 0)
+						DB:DamageDone(source, ability, 1, 0, 0, 0, 0, 0, amount, 0, 0)
+
+						if self.TargetParty[target] then
+							if self.TargetParty[source] then
+								DB:BuildFail(1, target, source, ability, amount)
+							end
+							DB:DeathHistory(target, source, ability, amount, 1, 0, 0, 0)
+						end
+					end
+					return
+				end
+
 				if choice < 3 then
 					local hit = 0
 					if choice == 1 then hit=1 end
@@ -1556,7 +1582,30 @@ function DPSMate.Parser:CreatureVsCreatureSpellDamage(msg)
 		return
 	end
 	if choice == 12 or choice == 16 then return end -- Fail events
-	if choice == 15 then return end -- BoS causes damage (Negligable?)
+	if choice == 15 then -- causes (Soul Link, Blessing of Sacrifice, etc.)
+		i,j = strfind(nextword, " 's ", 1, true)
+		if i then
+			source = strsub(nextword, 1, i-1)
+			ability = strsub(nextword, j+1)
+			local si, _, amountStr = strfind(msg, "(%d+) damage%.", k)
+			if si then
+				local amount = tnbr(amountStr)
+				local target = strsub(msg, k, si-2)
+				local prefixAmount, prefixCase = GetPrefix(msg, si)
+				local block = 0
+				if prefixCase then
+					if prefixCase == "blocked" then block = 1
+					elseif prefixCase == "absorbed" then
+						DB:SetUnregisterVariables(prefixAmount, ability, source)
+					end
+				end
+				DB:EnemyDamage(false, nil, target, ability, 1, 0, 0, 0, 0, 0, amount, source, block, 0)
+				DB:DamageTaken(target, ability, 1, 0, 0, 0, 0, 0, amount, source, 0, block)
+				DB:DeathHistory(target, source, ability, amount, 1, 0, 0, 0)
+			end
+		end
+		return
+	end
 	-- We do not track monster deaths
 	if choice == 17 then return end
 	-- We do not track evades
