@@ -537,29 +537,27 @@ DPSMate.DB.VARIABLES_LOADED = function()
 				reportdelay = false
 			}
 		end
-		if DPSMateHistory == nil then 
-			DPSMateHistory = {
-				names = {},
-				DMGDone = {},
-				DMGTaken = {},
-				EDDone = {},
-				EDTaken = {},
-				THealing = {},
-				EHealing = {},
-				OHealing = {},
-				EHealingTaken = {},
-				THealingTaken = {},
-				OHealingTaken = {},
-				Absorbs = {},
-				Deaths = {},
-				Interrupts = {},
-				Dispels = {},
-				Auras = {},
-				Threat = {},
-				Fail = {},
-				CCBreaker = {}
-			}
-		end
+		if DPSMateHistory == nil then DPSMateHistory = {} end
+		if DPSMateHistory["names"] == nil then DPSMateHistory["names"] = {} end
+		if DPSMateHistory["DMGDone"] == nil then DPSMateHistory["DMGDone"] = {} end
+		if DPSMateHistory["DMGTaken"] == nil then DPSMateHistory["DMGTaken"] = {} end
+		if DPSMateHistory["EDDone"] == nil then DPSMateHistory["EDDone"] = {} end
+		if DPSMateHistory["EDTaken"] == nil then DPSMateHistory["EDTaken"] = {} end
+		if DPSMateHistory["THealing"] == nil then DPSMateHistory["THealing"] = {} end
+		if DPSMateHistory["EHealing"] == nil then DPSMateHistory["EHealing"] = {} end
+		if DPSMateHistory["OHealing"] == nil then DPSMateHistory["OHealing"] = {} end
+		if DPSMateHistory["EHealingTaken"] == nil then DPSMateHistory["EHealingTaken"] = {} end
+		if DPSMateHistory["THealingTaken"] == nil then DPSMateHistory["THealingTaken"] = {} end
+		if DPSMateHistory["OHealingTaken"] == nil then DPSMateHistory["OHealingTaken"] = {} end
+		if DPSMateHistory["Absorbs"] == nil then DPSMateHistory["Absorbs"] = {} end
+		if DPSMateHistory["Deaths"] == nil then DPSMateHistory["Deaths"] = {} end
+		if DPSMateHistory["Interrupts"] == nil then DPSMateHistory["Interrupts"] = {} end
+		if DPSMateHistory["Dispels"] == nil then DPSMateHistory["Dispels"] = {} end
+		if DPSMateHistory["Auras"] == nil then DPSMateHistory["Auras"] = {} end
+		if DPSMateHistory["Threat"] == nil then DPSMateHistory["Threat"] = {} end
+		if DPSMateHistory["Fail"] == nil then DPSMateHistory["Fail"] = {} end
+		if DPSMateHistory["CCBreaker"] == nil then DPSMateHistory["CCBreaker"] = {} end
+		DPSMateHistory["Fails"] = nil
 		if DPSMateUser == nil then DPSMateUser = {} end
 		if DPSMateAbility == nil then DPSMateAbility = {} end
 		if DPSMateDamageDone == nil then DPSMateDamageDone = {[1]={},[2]={}} end

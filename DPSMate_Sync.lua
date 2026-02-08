@@ -1425,8 +1425,11 @@ function DPSMate.Sync:AurasOut()
 			cou = cou + 1
 		end
 		for ca, va in pairs(val[3]) do
-			Buffer[cou] = {"DPSMate_AurasCause", ability..","..DPSMate:GetUserById(ca)..","..va..","}
-			cou = cou + 1
+			local userName = DPSMate:GetUserById(ca)
+			if userName then
+				Buffer[cou] = {"DPSMate_AurasCause", ability..","..userName..","..va..","}
+				cou = cou + 1
+			end
 		end
 	end
 end

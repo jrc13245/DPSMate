@@ -44,25 +44,29 @@ function DPSMate.Modules.EDT:GetSortedTable(arr,k)
 		CV = 0
 		for cat, val in pairs(v) do
 			if cat~="i" then
-				CV = CV+val["i"]
+				if DPSMate:ApplyFilter(k, DPSMate:GetUserById(cat)) then
+					CV = CV+val["i"]
+				end
 			end
 		end
-		i = 1
-		while true do
-			if (not b[i]) then
-				tinsert(b, i, CV)
-				tinsert(a, i, c)
-				break
-			else
-				if b[i] < CV then
+		if CV > 0 then
+			i = 1
+			while true do
+				if (not b[i]) then
 					tinsert(b, i, CV)
 					tinsert(a, i, c)
 					break
+				else
+					if b[i] < CV then
+						tinsert(b, i, CV)
+						tinsert(a, i, c)
+						break
+					end
 				end
+				i=i+1
 			end
-			i=i+1
+			total = total + CV
 		end
-		total = total + CV
 	end
 	return b, total, a
 end

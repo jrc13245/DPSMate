@@ -815,7 +815,7 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 				Dispels = {},
 				Auras = {},
 				Threat = {},
-				Fails = {},
+				Fail = {},
 				CCBreaker = {}
 			}
 			DPSMateCombatTime = {
