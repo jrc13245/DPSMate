@@ -115,6 +115,8 @@ end
 
 local DPSSettings = {}
 local DPSHist = {}
+local fontRefreshAt = nil
+local GT = GetTime
 
 -- Begin functions
 
@@ -130,6 +132,10 @@ function DPSMate:OnLoad()
 	if DPSMate.L.UpdateFrameTexts then
 		DPSMate.L.UpdateFrameTexts()
 	end
+
+	-- Schedule a deferred font refresh so that font settings survive
+	-- skinning addons (e.g. pfUI) that override fonts after load.
+	fontRefreshAt = GT() + 1
 end
 
 function DPSMate:UpdatePointer()
@@ -527,10 +533,39 @@ function DPSMate:ScaleDown(arr, start)
 	return t
 end
 
+function DPSMate:RefreshFonts()
+	if not DPSSettings["windows"][1] then return end
+	local fonts = self.Options.fonts
+	local flags = self.Options.fontflags
+	for k, c in pairs(DPSSettings["windows"]) do
+		local barFont = fonts[c["barfont"]]
+		local barSize = c["barfontsize"]
+		local barFlag = flags[c["barfontflag"]]
+		local titleFont = fonts[c["titlebarfont"]]
+		local titleSize = c["titlebarfontsize"]
+		local titleFlag = flags[c["titlebarfontflag"]]
+		local name = c["name"]
+		_G("DPSMate_"..name.."_Head_Font"):SetFont(titleFont, titleSize, titleFlag)
+		_G("DPSMate_"..name.."_ScrollFrame_Child_Total_Name"):SetFont(barFont, barSize, barFlag)
+		_G("DPSMate_"..name.."_ScrollFrame_Child_Total_Value"):SetFont(barFont, barSize, barFlag)
+		for i=1, 40 do
+			_G("DPSMate_"..name.."_ScrollFrame_Child_StatusBar"..i.."_Name"):SetFont(barFont, barSize, barFlag)
+			_G("DPSMate_"..name.."_ScrollFrame_Child_StatusBar"..i.."_Value"):SetFont(barFont, barSize, barFlag)
+		end
+	end
+end
+
 local framePointerCache = {}
 function DPSMate:SetStatusBarValue()
-	
+
 	if not DPSSettings["windows"][1] or self.Options.TestMode then return end
+
+	-- Deferred font refresh: wait ~1s after load for skinning addons to finish,
+	-- then re-apply saved font settings once.
+	if fontRefreshAt and GT() >= fontRefreshAt then
+		fontRefreshAt = nil
+		self:RefreshFonts()
+	end
 	local arr, cbt, ecbt, user, val, perc, strt, statusbar, r, g, b, img, len
 	for k,c in pairs(DPSSettings.windows) do
 		arr, cbt, ecbt = self:GetMode(k)
