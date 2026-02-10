@@ -53,6 +53,8 @@ locales\NPCDB-1.0_zhCN.lua
 locales\zhCN.lua
 locales\DPSMate_ParserZHCN.lua
 
+DPSMate_ParserNP.lua
+
 DPSMate_Options.lua
 DPSMate_Sync.lua
 DPSMate_DataBuilder.lua

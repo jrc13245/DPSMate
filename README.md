@@ -12,16 +12,42 @@ Originally by Shino &lt;Synced&gt; - Kronos. This fork targets TWoW/Kronos priva
    - `WTF/Account/<ACCOUNT>/SavedVariables/DPSMate.lua` (account-wide settings)
    - `WTF/Account/<ACCOUNT>/<SERVER>/<CHARACTER>/SavedVariables/DPSMate.lua` (per-character data)
 4. Add these lines to `WTF/config.wtf` for full combat log range:
-```
-SET CombatLogRangeParty "150"
-SET CombatLogRangePartyPet "150"
-SET CombatLogRangeFriendlyPlayers "150"
-SET CombatLogRangeFriendlyPlayersPets "150"
-SET CombatLogRangeHostilePlayers "150"
-SET CombatLogRangeHostilePlayersPets "150"
-SET CombatLogRangeCreature "150"
-```
+   ```
+   SET CombatLogRangeParty "150"
+   SET CombatLogRangePartyPet "150"
+   SET CombatLogRangeFriendlyPlayers "150"
+   SET CombatLogRangeFriendlyPlayersPets "150"
+   SET CombatLogRangeHostilePlayers "150"
+   SET CombatLogRangeHostilePlayersPets "150"
+   SET CombatLogRangeCreature "150"
+   ```
 5. Log in and `/reload` to load the addon.
+
+## Nampower / SuperWoW Integration
+
+When both [Nampower](https://github.com/namreeb/nampower) and [SuperWoW](https://github.com/balakethelock/SuperWoW) are detected, DPSMate automatically switches from string-based combat log parsing to structured event handling. This eliminates regex pattern matching for damage events, reducing parser CPU usage significantly in raids.
+
+### Requirements
+
+Both DLLs must be present. Nampower provides the structured combat events; SuperWoW provides GUID-to-name resolution (`UnitName(guid)`, `UnitExists` returning GUIDs).
+
+### What Gets Replaced
+
+| Nampower Version | Events Handled | CHAT_MSG Events Replaced |
+|------------------|----------------|--------------------------|
+| v2.24+ | `AUTO_ATTACK_SELF/OTHER` | 16 melee hit/miss events |
+| v2.31+ | `SPELL_DAMAGE_EVENT_SELF/OTHER`, `SPELL_MISS_SELF/OTHER` | 13 spell damage events |
+
+### What Stays on the String Parser
+
+- Healing and buff/debuff tracking (deduplication with `CHAT_MSG_SPELL_*_BUFF` is non-trivial)
+- Death events (`CHAT_MSG_COMBAT_*_DEATH` provide killer/ability detail)
+- Damage shields, dispels, aura tracking
+- Environmental damage (falling, lava, drowning)
+
+### Fallback
+
+Without Nampower or SuperWoW, the addon works identically to before -- all `CHAT_MSG_*` parsing remains active. No configuration needed.
 
 ## Slash Commands
 
@@ -40,7 +66,8 @@ SET CombatLogRangeCreature "150"
 
 ## Features
 
-**Tracking Modes (~40):**
+### Tracking Modes (~40)
+
 - Damage done / DPS / damage taken / DTPS
 - Enemy damage done / taken
 - Healing (total, effective, overhealing) / HPS / EHPS / OHPS
@@ -58,7 +85,8 @@ SET CombatLogRangeCreature "150"
 - Casts
 - Fails
 
-**UI:**
+### UI
+
 - Multiple independent windows showing different modes simultaneously
 - Resizable and movable frames
 - Per-window customization of fonts, colors, textures, bar height, spacing, columns
@@ -67,7 +95,8 @@ SET CombatLogRangeCreature "150"
 - Compare mode for player-vs-player analysis
 - Detail views with graphs for every mode
 
-**Data Management:**
+### Data Management
+
 - Configurable segment history (1-20 fight segments)
 - Boss-only fight filtering
 - Automatic stale player pruning between fights
@@ -80,7 +109,8 @@ enUS, deDE, frFR, ruRU, koKR, zhCN
 
 ## Optional Dependencies
 
-- **KLHThreatMeter** - enables threat/TPS tracking
+- **KLHThreatMeter** -- enables threat/TPS tracking
+- **Nampower** (v2.24+) + **SuperWoW** -- structured event parsing for reduced CPU usage
 
 ## Troubleshooting
 
@@ -92,3 +122,8 @@ enUS, deDE, frFR, ruRU, koKR, zhCN
 **Missing group members?**
 - Ensure combat log range settings are applied in `config.wtf` (see Installation step 4).
 - Verify all raid members have the addon loaded for sync to work.
+
+**Nampower events not activating?**
+- Both Nampower and SuperWoW DLLs must be loaded. Check that `GetNampowerVersion` and `SUPERWOW_VERSION` exist in-game (e.g. `/script print(GetNampowerVersion())`).
+- Auto attack events require Nampower v2.24+. Spell damage events require v2.31+.
+- The CVar `NP_EnableAutoAttackEvents` is set automatically by DPSMate on login.

@@ -116,6 +116,7 @@ end
 local DPSSettings = {}
 local DPSHist = {}
 local fontRefreshAt = nil
+local savedFontSettings = nil
 local GT = GetTime
 
 -- Begin functions
@@ -125,6 +126,19 @@ function DPSMate:OnLoad()
 	SlashCmdList["DPSMate"] = function(msg) DPSMate:SlashCMDHandler(msg) end
 
 	DPSMate:UpdatePointer()
+
+	-- Snapshot font settings before skinning addons can overwrite them
+	savedFontSettings = {}
+	for k, w in pairs(DPSSettings["windows"]) do
+		savedFontSettings[k] = {
+			barfont = w["barfont"],
+			barfontsize = w["barfontsize"],
+			barfontflag = w["barfontflag"],
+			titlebarfont = w["titlebarfont"],
+			titlebarfontsize = w["titlebarfontsize"],
+			titlebarfontflag = w["titlebarfontflag"],
+		}
+	end
 
 	DPSMate:InitializeFrames()
 	DPSMate.Options:InitializeConfigMenu()
@@ -535,9 +549,20 @@ end
 
 function DPSMate:RefreshFonts()
 	if not DPSSettings["windows"][1] then return end
+	if not savedFontSettings then return end
 	local fonts = self.Options.fonts
 	local flags = self.Options.fontflags
 	for k, c in pairs(DPSSettings["windows"]) do
+		local saved = savedFontSettings[k]
+		if saved then
+			-- Restore user's saved font settings into the live table
+			c["barfont"] = saved.barfont
+			c["barfontsize"] = saved.barfontsize
+			c["barfontflag"] = saved.barfontflag
+			c["titlebarfont"] = saved.titlebarfont
+			c["titlebarfontsize"] = saved.titlebarfontsize
+			c["titlebarfontflag"] = saved.titlebarfontflag
+		end
 		local barFont = fonts[c["barfont"]]
 		local barSize = c["barfontsize"]
 		local barFlag = flags[c["barfontflag"]]
@@ -553,6 +578,7 @@ function DPSMate:RefreshFonts()
 			_G("DPSMate_"..name.."_ScrollFrame_Child_StatusBar"..i.."_Value"):SetFont(barFont, barSize, barFlag)
 		end
 	end
+	savedFontSettings = nil
 end
 
 local framePointerCache = {}
