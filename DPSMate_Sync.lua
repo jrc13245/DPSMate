@@ -1114,9 +1114,15 @@ function DPSMate.Sync:DMGTakenAbilityOut()
 	if not DPSMateDamageTaken[1][pid] then return end
 	for cat, val in pairs((DPSMateDamageTaken[1][pid])) do
 		if cat~="i" then
-			for ca, va in pairs(val) do
-				Buffer[cou] = {"DPSMate_DMGTakenAbility", DPSMate:GetUserById(cat)..","..DPSMate:GetAbilityById(ca)..","..va[1]..","..va[2]..","..va[3]..","..ceil(va[4])..","..va[5]..","..va[6]..","..va[7]..","..ceil(va[8])..","..va[9]..","..va[10]..","..va[11]..","..va[12]..","..va[13]..","..ceil(va[14])..","..va[15]..","..va[16]..","..va[17]..","..ceil(va[18])..","..va[19]..","..va[20]..","..va[21]..","..va[22]..","..ceil(va[23])..","}
-				cou = cou + 1
+			local user = DPSMate:GetUserById(cat)
+			if user then
+				for ca, va in pairs(val) do
+					local ability = DPSMate:GetAbilityById(ca)
+					if ability then
+						Buffer[cou] = {"DPSMate_DMGTakenAbility", user..","..ability..","..va[1]..","..va[2]..","..va[3]..","..ceil(va[4])..","..va[5]..","..va[6]..","..va[7]..","..ceil(va[8])..","..va[9]..","..va[10]..","..va[11]..","..va[12]..","..va[13]..","..ceil(va[14])..","..va[15]..","..va[16]..","..va[17]..","..ceil(va[18])..","..va[19]..","..va[20]..","..va[21]..","..va[22]..","..ceil(va[23])..","}
+						cou = cou + 1
+					end
+				end
 			end
 		end
 	end
