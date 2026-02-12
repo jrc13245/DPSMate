@@ -382,22 +382,25 @@ function DPSMate.Modules.DetailsAurasTotal:SortTable()
 	for cat, _ in db do
 		local user = DPSMate:GetUserById(cat)
 		if DPSMate:ApplyFilter(curKey, user) then
-			local a,_,b,c = DPSMate.Modules.AurasUptimers:EvalTable(DPSMateUser[user], curKey)
-			for ca,va in a do
-				local name = DPSMate:GetAbilityById(va)
-				if self.Debuffs[name] then
-					if t[name] then
-						t[name][2] = DPSMate.DB:WeightedAverage(t[name][2], b[ca], t[name][3], c[ca])
-						t[name][3] = t[name][3] + c[ca]
+			local uid = DPSMateUser[user]
+			if uid then
+				local a,_,b,c = DPSMate.Modules.AurasUptimers:EvalTable(uid, curKey)
+				for ca,va in a do
+					local name = DPSMate:GetAbilityById(va)
+					if self.Debuffs[name] then
+						if t[name] then
+							t[name][2] = DPSMate.DB:WeightedAverage(t[name][2], b[ca], t[name][3], c[ca])
+							t[name][3] = t[name][3] + c[ca]
+						else
+							t[name] = {name, b[ca], c[ca]}
+						end
 					else
-						t[name] = {name, b[ca], c[ca]}
-					end
-				else
-					if u[name] then
-						u[name][2] = DPSMate.DB:WeightedAverage(u[name][2], b[ca], u[name][3], c[ca])
-						u[name][3] = u[name][3] + c[ca]
-					else
-						u[name] = {name, b[ca], c[ca]}
+						if u[name] then
+							u[name][2] = DPSMate.DB:WeightedAverage(u[name][2], b[ca], u[name][3], c[ca])
+							u[name][3] = u[name][3] + c[ca]
+						else
+							u[name] = {name, b[ca], c[ca]}
+						end
 					end
 				end
 			end

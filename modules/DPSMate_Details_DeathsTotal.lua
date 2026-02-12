@@ -47,12 +47,12 @@ function DPSMate.Modules.DetailsDeathsTotal:UpdateRow(row, a, b, c, d, e, f, g, 
 	if c=="" then
 		_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Victim"):SetText("|cFF"..hexClassColor["warrior"]..c.."|r")
 	else
-		_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Victim"):SetText("|cFF"..hexClassColor[DPSMateUser[c][2] or "warrior"]..c.."|r")
+		_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Victim"):SetText("|cFF"..hexClassColor[(DPSMateUser[c] and DPSMateUser[c][2]) or "warrior"]..c.."|r")
 	end
 	if h=="" then
 		_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor["warrior"]..h.."|r")
 	else
-		_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[DPSMateUser[h][2] or "warrior"]..h.."|r")
+		_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[(DPSMateUser[h] and DPSMateUser[h][2]) or "warrior"]..h.."|r")
 	end
 	_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Over"):SetText(strformat("%.2f", d).."s")
 	_G("DPSMate_Details_Deaths_Total_LogDetails_Row"..row.."_Ability"):SetText(e)
@@ -170,6 +170,7 @@ function DPSMate.Modules.DetailsDeathsTotal:CreateGraphTable(obj)
 end
 
 function DPSMate.Modules.DetailsDeathsTotal:ShowTooltip(user, obj, id)
+	if not DPSMateUser[user] then return end
 	local a,b,c = DPSMate.Modules.Deaths:EvalTable(DPSMateUser[user], curKey, id)
 	GameTooltip:SetOwner(obj, "TOPLEFT")
 	GameTooltip:AddLine(user.."'s "..strlower(DPSMate.L["deathhistory"]), 1,1,1)

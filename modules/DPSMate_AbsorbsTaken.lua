@@ -124,6 +124,7 @@ function DPSMate.Modules.AbsorbsTaken:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.AbsorbsTaken:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local arr = DPSMate:GetMode(k)
 	local b, a, total = {}, {}, 0
 	if not arr[user[1]] then return {}, 0, {} end

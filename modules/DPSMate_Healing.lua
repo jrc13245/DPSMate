@@ -53,6 +53,7 @@ function DPSMate.Modules.Healing:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.Healing:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, d = {}, {}
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

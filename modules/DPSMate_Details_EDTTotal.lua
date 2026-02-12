@@ -414,7 +414,8 @@ function DPSMate.Modules.DetailsEDTTotal:LoadLegendButtons()
 		local name = DPSMate:GetUserById(val[2])
 		local font = _G("DPSMate_Details_EDTTotal_DiagramLegend_Child_C"..cat.."_Font")
 		font:SetText(name)
-		font:SetTextColor(DPSMate:GetClassColor(DPSMateUser[name][2]))
+		local uentry = DPSMateUser[name]
+		font:SetTextColor(DPSMate:GetClassColor(uentry and uentry[2]))
 		_G("DPSMate_Details_EDTTotal_DiagramLegend_Child_C"..cat.."_SwatchBg"):SetTexture(val[1][1],val[1][2],val[1][3],1)
 		_G("DPSMate_Details_EDTTotal_DiagramLegend_Child_C"..cat):Show()
 	end
@@ -429,7 +430,8 @@ function DPSMate.Modules.DetailsEDTTotal:LoadTable()
 	end
 	for cat, val in pairs(arr) do
 		if cat>30 then break end
-		local r,g,b = DPSMate:GetClassColor(DPSMateUser[val[1]][2])
+		local uentry = DPSMateUser[val[1]]
+		local r,g,b = DPSMate:GetClassColor(uentry and uentry[2])
 		_G("DPSMate_Details_EDTTotal_PlayerList_Child"):SetHeight(cat*30)
 		_G("DPSMate_Details_EDTTotal_PlayerList_Child_R"..cat.."_Name"):SetText(val[1])
 		_G("DPSMate_Details_EDTTotal_PlayerList_Child_R"..cat.."_Name"):SetTextColor(r,g,b)
@@ -449,6 +451,7 @@ end
 
 function DPSMate.Modules.DetailsEDTTotal:ShowTooltip(user, obj)
 	local name = DPSMate:GetUserById(user)
+	if not DPSMateUser[name] then return end
 	local a,b,c = DPSMate.Modules.EDT:EvalTable(DPSMateUser[name], curKey)
 	local pet = ""
 	GameTooltip:SetOwner(obj, "TOPLEFT")

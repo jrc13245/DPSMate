@@ -172,10 +172,12 @@ function DPSMate.Modules.DetailsOverhealing:UpdateSumGraph()
 end
 
 function DPSMate.Modules.DetailsOverhealing:EvalToggleTable(cname)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return {}, {}, 0 end
 	local a,b = {},{}
 	local d = 0
 	for cat, val in db2 do
-		if val[DPSMateUser[cname or DetailsUser][1]] then
+		if val[uid[1]] then
 			local CV = 0
 			local c = {[1] = 0,[2] = {},[3] = {}}
 			for p, v in val[DPSMateUser[cname or DetailsUser][1]] do
@@ -352,7 +354,8 @@ function DPSMate.Modules.DetailsOverhealing:Player_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if d1[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(d1[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(d2[lineplusoffset][1].." ("..strformat("%.2f", (d2[lineplusoffset][1]*100/d3)).."%)")

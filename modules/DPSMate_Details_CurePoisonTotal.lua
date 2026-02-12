@@ -46,12 +46,12 @@ function DPSMate.Modules.DetailsCurePoisonTotal:UpdateRow(row, a, b, c, d, e)
 	if c == "" then
 		_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Cause"):SetText("")
 	else
-		_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[DPSMateUser[c][2] or "warrior"]..c.."|r")
+		_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[(DPSMateUser[c] and DPSMateUser[c][2]) or "warrior"]..c.."|r")
 	end
 	if d == "" then
 		_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Target"):SetText("")
 	else
-		_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Target"):SetText("|cFF"..hexClassColor[DPSMateUser[d][2] or "warrior"]..d.."|r")
+		_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Target"):SetText("|cFF"..hexClassColor[(DPSMateUser[d] and DPSMateUser[d][2]) or "warrior"]..d.."|r")
 	end
 	_G("DPSMate_Details_CurePoison_Total_LogDetails_Row"..row.."_Ability"):SetText(e)
 end
@@ -124,6 +124,7 @@ function DPSMate.Modules.DetailsCurePoisonTotal:CreateGraphTable(obj)
 end
 
 function DPSMate.Modules.DetailsCurePoisonTotal:ShowTooltip(user, obj, id)
+	if not DPSMateUser[user] then return end
 	local a,b,c = DPSMate.Modules.CurePoison:EvalTable(DPSMateUser[user], curKey, id)
 	GameTooltip:SetOwner(obj, "TOPLEFT")
 	GameTooltip:AddLine(user.."'s "..strlower(DPSMate.L["curepoison"]), 1,1,1)

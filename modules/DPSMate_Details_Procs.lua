@@ -170,7 +170,9 @@ end
 
 function DPSMate.Modules.DetailsProcs:GetTotalHits(cname)
 	if hits == 1 or (cname and hitsComp == 1) then
-		for cat, val in DPSMateDamageDone[1][DPSMateUser[cname or DetailsUser][1]] do
+		local htuid = DPSMateUser[cname or DetailsUser]
+		if not htuid then return 1 end
+		for cat, val in DPSMateDamageDone[1][htuid[1]] do
 			if cat~="i" then
 				if self.mab[DPSMate:GetAbilityById(cat)] then
 					if cname then
@@ -294,7 +296,9 @@ function DPSMate.Modules.DetailsProcs:UpdateBuffs(arg1, comp, cname)
 	if comp~="" and comp then
 		cname = DetailsUserComp
 	end
-	local a,b,c = DPSMate.Modules.Procs:EvalTable(DPSMateUser[cname or DetailsUser], curKey)
+	local puid = DPSMateUser[cname or DetailsUser]
+	if not puid then return end
+	local a,b,c = DPSMate.Modules.Procs:EvalTable(puid, curKey)
 	local t1TL = DPSMate:TableLength(a)-6
 	local path = "DPSMate_Details_"..comp.."Procs_Buffs_Row"
 	if comp~="" and comp then

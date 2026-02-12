@@ -46,12 +46,12 @@ function DPSMate.Modules.DetailsDecursesTotal:UpdateRow(row, a, b, c, d, e)
 	if c == "" then
 		_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Cause"):SetText("")
 	else
-		_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[DPSMateUser[c][2] or "warrior"]..c.."|r")
+		_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[(DPSMateUser[c] and DPSMateUser[c][2]) or "warrior"]..c.."|r")
 	end
 	if d == "" then
 		_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Target"):SetText("")
 	else
-		_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Target"):SetText("|cFF"..hexClassColor[DPSMateUser[d][2] or "warrior"]..d.."|r")
+		_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Target"):SetText("|cFF"..hexClassColor[(DPSMateUser[d] and DPSMateUser[d][2]) or "warrior"]..d.."|r")
 	end
 	_G("DPSMate_Details_Decurses_Total_LogDetails_Row"..row.."_Ability"):SetText(e)
 end
@@ -64,7 +64,7 @@ function DPSMate.Modules.DetailsDecursesTotal:EvalTable()
 			for ca, va in val["i"][2] do
 				local ab = DPSMate:GetAbilityById(va[2])
 				local abtwo = DPSMate:GetUserById(va[3])
-				if DPSMate.Modules.Decurses:IsValid(ab, abtwo, DPSMateUser[name]) then
+				if DPSMate.Modules.Decurses:IsValid(ab, abtwo, DPSMateUser[name] or {}) then
 					local i=1
 					while true do
 						if not a[i] then
@@ -124,6 +124,7 @@ function DPSMate.Modules.DetailsDecursesTotal:CreateGraphTable(obj)
 end
 
 function DPSMate.Modules.DetailsDecursesTotal:ShowTooltip(user, obj, id)
+	if not DPSMateUser[user] then return end
 	local a,b,c = DPSMate.Modules.Decurses:EvalTable(DPSMateUser[user], curKey, id)
 	GameTooltip:SetOwner(obj, "TOPLEFT")
 	GameTooltip:AddLine(user.."'s "..strlower(DPSMate.L["decurses"]), 1,1,1)

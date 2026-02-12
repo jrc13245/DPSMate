@@ -336,8 +336,10 @@ end
 function DPSMate.Modules.DetailsDamageTakenTotal:SortLineTable(uid)
 	local user = DPSMate:GetUserById(uid)
 	local newArr = {}
+	local uentry = DPSMateUser[user]
+	if not uentry then return newArr end
 	-- user
-	for cat, val in db[DPSMateUser[user][1]] do
+	for cat, val in db[uentry[1]] do
 		if cat~="i" then
 			for ca, va in val do
 				if va["i"] then
@@ -421,7 +423,8 @@ function DPSMate.Modules.DetailsDamageTakenTotal:LoadLegendButtons()
 		local name = DPSMate:GetUserById(val[2])
 		local font = _G("DPSMate_Details_DamageTakenTotal_DiagramLegend_Child_C"..cat.."_Font")
 		font:SetText(name)
-		font:SetTextColor(DPSMate:GetClassColor(DPSMateUser[name][2]))
+		local uentry = DPSMateUser[name]
+		font:SetTextColor(DPSMate:GetClassColor(uentry and uentry[2]))
 		_G("DPSMate_Details_DamageTakenTotal_DiagramLegend_Child_C"..cat.."_SwatchBg"):SetTexture(val[1][1],val[1][2],val[1][3],1)
 		_G("DPSMate_Details_DamageTakenTotal_DiagramLegend_Child_C"..cat):Show()
 	end
@@ -436,7 +439,8 @@ function DPSMate.Modules.DetailsDamageTakenTotal:LoadTable()
 	end
 	for cat, val in pairs(arr) do
 		if cat>30 then break end
-		local r,g,b = DPSMate:GetClassColor(DPSMateUser[val[1]][2])
+		local uentry = DPSMateUser[val[1]]
+		local r,g,b = DPSMate:GetClassColor(uentry and uentry[2])
 		_G("DPSMate_Details_DamageTakenTotal_PlayerList_Child"):SetHeight(cat*30)
 		_G("DPSMate_Details_DamageTakenTotal_PlayerList_Child_R"..cat.."_Name"):SetText(val[1])
 		_G("DPSMate_Details_DamageTakenTotal_PlayerList_Child_R"..cat.."_Name"):SetTextColor(r,g,b)
@@ -456,6 +460,7 @@ end
 
 function DPSMate.Modules.DetailsDamageTakenTotal:ShowTooltip(user, obj)
 	local name = DPSMate:GetUserById(user)
+	if not DPSMateUser[name] then return end
 	local a,b,c = DPSMate.Modules.DamageTaken:EvalTable(DPSMateUser[name], curKey)
 	local pet = ""
 	GameTooltip:SetOwner(obj, "TOPLEFT")

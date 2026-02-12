@@ -155,6 +155,7 @@ function DPSMate.Modules.DetailsProcsTotal:EvalTable()
 	for cat, val in db do -- each user
 		local user = DPSMate:GetUserById(cat)
 		if DPSMate:ApplyFilter(curKey, user) then
+			if not DPSMateUser[user] then break end
 			local z,x,y = DPSMate.Modules.Procs:EvalTable(DPSMateUser[user], curKey)
 			for ca, va in z do
 				if a[va] then

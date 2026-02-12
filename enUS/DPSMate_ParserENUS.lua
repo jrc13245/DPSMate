@@ -603,6 +603,7 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 		
 		if Kicks[ability] then DB:AssignPotentialKick(Player, ability, target, GetTime()) end
 		if DmgProcs[ability] then DB:BuildBuffs(Player, Player, ability, true) end
+		if self.IgnoredDmgSpells[ability] then return end
 		DB:EnemyDamage(true, nil, Player, ability, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
 		DB:DamageDone(Player, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
 		if self.TargetParty[target] then DB:BuildFail(1, target, Player, ability, amount);DB:DeathHistory(target, Player, ability, amount, hit, crit, 0, 0) end
@@ -888,6 +889,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 					
 					if Kicks[ability] then DB:AssignPotentialKick(source, ability, target, GetTime()) end
 					if DmgProcs[ability] then DB:BuildBuffs(source, source, ability, true) end
+					if self.IgnoredDmgSpells[ability] then return end
 					DB:EnemyDamage(true, nil, source, ability, hit, crit, 0, 0, 0, 0, amount, target, 0, 0)
 					DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, 0)
 					

@@ -80,7 +80,9 @@ function DPSMate.Modules.DetailsFails:UpdateBuffs(arg1, comp, cname)
 	if comp~="" and comp then
 		cname = DetailsUserComp
 	end
-	local a = db[DPSMateUser[cname or DetailsUser][1]]
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local a = db[uid[1]]
 	local t1TL = DPSMate:TableLength(a)-6
 	local path = "DPSMate_Details_"..comp.."Fails_Buffs_Row"
 	if comp~="" and comp then

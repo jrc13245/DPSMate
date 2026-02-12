@@ -162,6 +162,7 @@ function DPSMate.Modules.HealingAndAbsorbs:GetSortedTable(arr, k)
 end
 
 function DPSMate.Modules.HealingAndAbsorbs:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local b, total = {}, 0
 	local temp = {}
 	local arr = DPSMate:GetModeByArr(DPSMateAbsorbs, k, "Absorbs")

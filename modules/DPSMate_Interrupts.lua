@@ -58,7 +58,9 @@ function DPSMate.Modules.Interrupts:GetSortedTable(arr,k)
 	local b, a, total = {}, {}, 0
 	for cat, val in pairs(arr) do -- 1 Owner
 		local name = DPSMate:GetUserById(cat)
-		if (not DPSMateUser[name][4] or (DPSMateUser[name][4] and not DPSMateSettings["mergepets"])) then
+		if not name or not DPSMateUser[name] then
+			-- skip unknown users
+		elseif (not DPSMateUser[name][4] or (DPSMateUser[name][4] and not DPSMateSettings["mergepets"])) then
 			if DPSMate:ApplyFilter(k, name) then
 				local CV = val["i"][1]
 				if DPSMateUser[name][5] and DPSMateUser[DPSMateUser[name][5]] and DPSMateUser[DPSMateUser[name][5]][1] and arr[DPSMateUser[DPSMateUser[name][5]][1]] and DPSMateSettings["mergepets"] and DPSMateUser[name][5]~=name then
@@ -87,6 +89,7 @@ function DPSMate.Modules.Interrupts:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.Interrupts:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, b, total, pet, u = {}, {}, 0, false, {}
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end
@@ -97,7 +100,8 @@ function DPSMate.Modules.Interrupts:EvalTable(user, k)
 			if cat~="i" then
 				local CV = 0
 				local d,e = {}, {}
-				if (DPSMateUser[DPSMate:GetUserById(vvv)][4]) then pet=true; else pet=false; end
+				local vvvname = DPSMate:GetUserById(vvv)
+				if vvvname and DPSMateUser[vvvname] and DPSMateUser[vvvname][4] then pet=true; else pet=false; end
 				for ca, va in pairs(val) do
 					local CVV = 0
 					for c, v in pairs(va) do

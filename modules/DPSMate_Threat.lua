@@ -48,6 +48,7 @@ function DPSMate.Modules.Threat:GetSortedTable(arr, k)
 end
 
 function DPSMate.Modules.Threat:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a,d, total = {}, {}, 0
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

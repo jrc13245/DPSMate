@@ -110,6 +110,7 @@ end
 
 -- Needs improvement, but kinda all tooltips need that
 function DPSMate.Modules.Deaths:EvalTable(user, k, id)
+	if not user then return {}, 0, {} end
 	local a, b, total = {}, {}, 0
 	local arr = DPSMate:GetMode(k)
 	local p = 1

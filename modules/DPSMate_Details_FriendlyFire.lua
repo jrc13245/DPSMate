@@ -568,7 +568,9 @@ function DPSMate.Modules.DetailsFF:SortLineTable(arr, b, cname)
 	else
 		for cat, val in arr do
 			if val[DPSMateUser[cname or DetailsUser][1]] then
-				if DPSMateUser[DPSMate:GetUserById(cat)][3] == DPSMateUser[cname or DetailsUser][3] and DPSMateUser[cname or DetailsUser][1] then
+				local ffcatname = DPSMate:GetUserById(cat)
+				local ffudata = DPSMateUser[cname or DetailsUser]
+				if ffcatname and DPSMateUser[ffcatname] and ffudata and DPSMateUser[ffcatname][3] == ffudata[3] and ffudata[1] then
 					for ca, va in val[DPSMateUser[cname or DetailsUser][1]] do
 						if ca~="i" and va["i"] then
 							for c,v in va["i"] do

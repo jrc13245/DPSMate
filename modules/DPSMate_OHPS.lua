@@ -42,6 +42,7 @@ function DPSMate.Modules.OHPS:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.OHPS:EvalTable(user, k, cbt)
+	if not user then return {}, 0, {} end
 	local a, d = {}, {}
 	local arr, cbet = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

@@ -175,11 +175,13 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:EvalToggleTable(cname)
 	local a,b = {},{}
 	local d = 0
 	local hackTemp = {}
+	local uentry = DPSMateUser[cname or DetailsUser]
+	if not uentry then return a, b, d end
 	for cat, val in db2 do
-		if val[DPSMateUser[cname or DetailsUser][1]] then
+		if val[uentry[1]] then
 			local CV = 0
 			local c = {[1] = 0,[2] = {},[3] = {}}
-			for p, v in val[DPSMateUser[cname or DetailsUser][1]] do
+			for p, v in val[uentry[1]] do
 				CV = CV + v[1]
 				local i = 1
 				while true do
@@ -206,10 +208,10 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:EvalToggleTable(cname)
 	
 	-- Absorbs
 	for cat, val in DPSMateAbsorbs[curKey] do
-		if val[DPSMateUser[cname or DetailsUser][1]] then
+		if val[uentry[1]] then
 			local CV = 0
 			local c = {[1] = 0,[2] = {},[3] = {}}
-			for ca, va in val[DPSMateUser[cname or DetailsUser][1]] do
+			for ca, va in val[uentry[1]] do
 				local dmg = 5
 				local hit, hitav, hitmin, hitmax = 0, 0, 0, 0
 				local shieldname = DPSMate:GetAbilityById(ca)

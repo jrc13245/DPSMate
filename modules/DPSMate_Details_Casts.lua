@@ -67,7 +67,9 @@ function DPSMate.Modules.DetailsCasts:UpdateBuffs(arg1, comp, cname)
 	if comp~="" and comp then
 		cname = DetailsUserComp
 	end
-	local a,b,c = DPSMate.Modules.Casts:EvalTable(DPSMateUser[cname or DetailsUser], curKey)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local a,b,c = DPSMate.Modules.Casts:EvalTable(uid, curKey)
 	local t1TL = DPSMate:TableLength(a)-6
 	local path = "DPSMate_Details_"..comp.."Casts_Buffs_Row"
 	if comp~="" and comp then

@@ -82,6 +82,7 @@ function DPSMate.Modules.Fails:GetSortedTable(arr, k)
 end
 
 function DPSMate.Modules.Fails:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, b, total = {}, {}, 0
 	local temp = {}
 	local arr = DPSMate:GetMode(k)

@@ -169,7 +169,8 @@ function DPSMate.Modules.DetailsEDT:ScrollFrame_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if uArr[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(uArr[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[lineplusoffset][1].." ("..strformat("%.2f", (dArr[lineplusoffset][1]*100/dTot)).."%)")
@@ -291,10 +292,12 @@ function DPSMate.Modules.DetailsEDT:SelectDetailsButton(p,i, comp, cname)
 	local creature = tonumber(uArr[p])
 	_G("DPSMate_Details_"..comp.."EDT_Log_ScrollButton"..i.."_selected"):Show()
 	
-	local path = db[DPSMateUser[cname or DetailsUser][1]][creature][ability]
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local path = db[uid[1]][creature][ability]
 	local hit, crit, miss, parry, dodge, resist, hitMin, hitMax, critMin, critMax, hitav, critav, block, blockMin, blockMax, blockav, glance, glanceMin, glanceMax, glanceav = path[1], path[5], path[9], path[10], path[11], path[12], path[2], path[3], path[6], path[7], path[4], path[8], path[14], path[15], path[16], path[17], path[18], path[19], path[20], path[21]
 	local total, max = hit+crit+miss+parry+dodge+resist+glance+block, DPSMate:TMax({hit, crit, miss, parry, dodge, resist, glance, block})
-	
+
 	--_G("DPSMate_Details_"..comp.."EDT_LogDetails_Casts"):SetText("C: "..path[22])
 	-- Block
 	_G("DPSMate_Details_"..comp.."EDT_LogDetails_Amount0_Amount"):SetText(block)

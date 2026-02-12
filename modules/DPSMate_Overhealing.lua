@@ -53,6 +53,7 @@ function DPSMate.Modules.Overhealing:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.Overhealing:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, d = {}, {}
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

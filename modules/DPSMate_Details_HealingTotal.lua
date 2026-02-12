@@ -398,7 +398,8 @@ function DPSMate.Modules.DetailsHealingTotal:LoadLegendButtons()
 		local name = DPSMate:GetUserById(val[2])
 		local font = _G("DPSMate_Details_HealingTotal_DiagramLegend_Child_C"..cat.."_Font")
 		font:SetText(name)
-		font:SetTextColor(DPSMate:GetClassColor(DPSMateUser[name][2]))
+		local uentry = DPSMateUser[name]
+		font:SetTextColor(DPSMate:GetClassColor(uentry and uentry[2]))
 		_G("DPSMate_Details_HealingTotal_DiagramLegend_Child_C"..cat.."_SwatchBg"):SetTexture(val[1][1],val[1][2],val[1][3],1)
 		_G("DPSMate_Details_HealingTotal_DiagramLegend_Child_C"..cat):Show()
 	end
@@ -427,11 +428,12 @@ function DPSMate.Modules.DetailsHealingTotal:LoadTable()
 		_G("DPSMate_Details_HealingTotal_PlayerList_Child_R"..i.."_CB").act = false
 	end
 	for cat, val in arr do
-		if DPSMateUser[val[1]][4] then
+		local uentry = DPSMateUser[val[1]]
+		if uentry and uentry[4] then
 			i=i+1
 		else
 			if (cat-i)>30 then break end
-			local r,g,b = DPSMate:GetClassColor(DPSMateUser[val[1]][2])
+			local r,g,b = DPSMate:GetClassColor(uentry and uentry[2])
 			_G("DPSMate_Details_HealingTotal_PlayerList_Child"):SetHeight((cat-i)*30)
 			_G("DPSMate_Details_HealingTotal_PlayerList_Child_R"..(cat-i).."_Name"):SetText(val[1])
 			_G("DPSMate_Details_HealingTotal_PlayerList_Child_R"..(cat-i).."_Name"):SetTextColor(r,g,b)
@@ -451,6 +453,7 @@ end
 
 function DPSMate.Modules.DetailsHealingTotal:ShowTooltip(user, obj)
 	local name = DPSMate:GetUserById(user)
+	if not DPSMateUser[name] then return end
 	local a,b,c = DPSMate.Modules.Healing:EvalTable(DPSMateUser[name], curKey)
 	GameTooltip:SetOwner(obj, "TOPLEFT")
 	GameTooltip:AddLine(name.."'s "..strlower(DPSMate.L["thealing"]), 1,1,1)

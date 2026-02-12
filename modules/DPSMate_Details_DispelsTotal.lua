@@ -46,12 +46,12 @@ function DPSMate.Modules.DetailsDispelsTotal:UpdateRow(row, a, b, c, d, e)
 	if c == "" then
 		_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Cause"):SetText("")
 	else
-		_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[DPSMateUser[c][2] or "warrior"]..c.."|r")
+		_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Cause"):SetText("|cFF"..hexClassColor[(DPSMateUser[c] and DPSMateUser[c][2]) or "warrior"]..c.."|r")
 	end
 	if d == "" then
 		_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Target"):SetText("")
 	else
-		_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Target"):SetText("|cFF"..hexClassColor[DPSMateUser[d][2] or "warrior"]..d.."|r")
+		_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Target"):SetText("|cFF"..hexClassColor[(DPSMateUser[d] and DPSMateUser[d][2]) or "warrior"]..d.."|r")
 	end
 	_G("DPSMate_Details_Dispels_Total_LogDetails_Row"..row.."_Ability"):SetText(e)
 end
@@ -120,6 +120,7 @@ function DPSMate.Modules.DetailsDispelsTotal:CreateGraphTable(obj)
 end
 
 function DPSMate.Modules.DetailsDispelsTotal:ShowTooltip(user, obj, id)
+	if not DPSMateUser[user] then return end
 	local a,b,c = DPSMate.Modules.Dispels:EvalTable(DPSMateUser[user], curKey, id)
 	GameTooltip:SetOwner(obj, "TOPLEFT")
 	GameTooltip:AddLine(user.."'s "..strlower(DPSMate.L["dispels"]), 1,1,1)

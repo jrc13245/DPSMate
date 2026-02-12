@@ -697,7 +697,8 @@ function DPSMate:FormatNumbers(dmg,total,sort,k)
 end
 
 function DPSMate:ApplyFilter(key, name)
-	if not key or not name or not DPSMateUser[name] then return true end
+	if not name or not DPSMateUser[name] then return false end
+	if not key then return true end
 	local class = DPSMateUser[name][2] or "warrior"
 	local path = DPSSettings["windows"][key]
 	if path["grouponly"] then

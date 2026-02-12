@@ -155,7 +155,8 @@ function DPSMate.Modules.DetailsAbsorbs:ScrollFrame_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if uArr[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(uArr[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[lineplusoffset][1].." ("..strformat("%.2f", (dArr[lineplusoffset][1]*100/dTot)).."%)")
@@ -273,10 +274,11 @@ function DPSMate.Modules.DetailsAbsorbs:SelectCauseButton(i,p, comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if dArr[i][3][p][2][lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(dArr[i][3][p][2][lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[i][3][p][3][lineplusoffset][1].." ("..strformat("%.2f", (dArr[i][3][p][3][lineplusoffset][1]*100/dArr[i][3][p][1])).."%)")
-			if DPSMateUser[user][2] then
+			if uentry and uentry[2] then
 				_G(path.."_ScrollButton"..line.."_Icon"):SetTexture("Interface\\AddOns\\DPSMate\\images\\class\\"..img)
 			else
 				_G(path.."_ScrollButton"..line.."_Icon"):SetTexture("Interface\\AddOns\\DPSMate\\images\\npc")
@@ -432,11 +434,14 @@ function DPSMate.Modules.DetailsAbsorbs:UpdateStackedGraph(gg, comp, cname)
 		cname = DetailsUserComp
 	end
 	
+	local uentry = DPSMateUser[cname or DetailsUser]
+	if not uentry then return end
+
 	if toggle3 then
 		local temp = {}
 		if db[uArr[dSel]] then
-			if db[uArr[dSel]][DPSMateUser[cname or DetailsUser][1]] then
-				for ca, va in db[uArr[dSel]][DPSMateUser[cname or DetailsUser][1]]["i"] do
+			if db[uArr[dSel]][uentry[1]] then
+				for ca, va in db[uArr[dSel]][uentry[1]]["i"] do
 					local i, dmg = 1, 5
 					if DPSMateDamageTaken[1][uArr[dSel]] then
 						if DPSMateDamageTaken[1][uArr[dSel]][va[2]] then
@@ -449,7 +454,7 @@ function DPSMate.Modules.DetailsAbsorbs:UpdateStackedGraph(gg, comp, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*((uentry[8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -493,8 +498,8 @@ function DPSMate.Modules.DetailsAbsorbs:UpdateStackedGraph(gg, comp, cname)
 		-- Add absorbs points
 		local temp = {}
 		for cat, val in DPSMateAbsorbs[curKey] do
-			if val[DPSMateUser[cname or DetailsUser][1]] then
-				for ca, va in val[DPSMateUser[cname or DetailsUser][1]]["i"] do
+			if val[uentry[1]] then
+				for ca, va in val[uentry[1]]["i"] do
 					local i, dmg = 1, 5
 					if DPSMateDamageTaken[1][cat] then
 						if DPSMateDamageTaken[1][cat][va[2]] then
@@ -507,7 +512,7 @@ function DPSMate.Modules.DetailsAbsorbs:UpdateStackedGraph(gg, comp, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*((uentry[8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -546,10 +551,12 @@ end
 
 function DPSMate.Modules.DetailsAbsorbs:SortLineTable(arr, b, cname)
 	local newArr = {}
+	local uentry = DPSMateUser[cname or DetailsUser]
+	if not uentry then return newArr end
 	if b then
 		if DPSMateAbsorbs[curKey][b] then
-			if DPSMateAbsorbs[curKey][b][DPSMateUser[cname or DetailsUser][1]] then
-				for ca, va in DPSMateAbsorbs[curKey][b][DPSMateUser[cname or DetailsUser][1]]["i"] do
+			if DPSMateAbsorbs[curKey][b][uentry[1]] then
+				for ca, va in DPSMateAbsorbs[curKey][b][uentry[1]]["i"] do
 					local i, dmg = 1, 5
 					if DPSMateDamageTaken[1][b] then
 						if DPSMateDamageTaken[1][b][va[2]] then
@@ -562,7 +569,7 @@ function DPSMate.Modules.DetailsAbsorbs:SortLineTable(arr, b, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*((uentry[8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -586,8 +593,8 @@ function DPSMate.Modules.DetailsAbsorbs:SortLineTable(arr, b, cname)
 		end
 	else
 		for cat, val in pairs(arr) do
-			if val[DPSMateUser[cname or DetailsUser][1]] then
-				for ca, va in pairs(val[DPSMateUser[cname or DetailsUser][1]]["i"]) do
+			if val[uentry[1]] then
+				for ca, va in pairs(val[uentry[1]]["i"]) do
 					local i, dmg = 1, 5
 					if DPSMateDamageTaken[1][cat] then
 						if DPSMateDamageTaken[1][cat][va[2]] then
@@ -600,7 +607,7 @@ function DPSMate.Modules.DetailsAbsorbs:SortLineTable(arr, b, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*((uentry[8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]

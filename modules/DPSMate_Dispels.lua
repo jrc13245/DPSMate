@@ -70,6 +70,7 @@ function DPSMate.Modules.Dispels:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.Dispels:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, b = {}, {}
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

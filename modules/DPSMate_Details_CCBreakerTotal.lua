@@ -104,7 +104,7 @@ function DPSMate.Modules.DetailsCCBreakerTotal:UpdateBuffs(arg1)
 		_G(path..i).user = DetailsArr[pos][6]
 		_G(path..i.."_Icon"):SetTexture(DetailsArr[pos][2])
 		_G(path..i.."_Ability"):SetText(DetailsArr[pos][1])
-		_G(path..i.."_Target"):SetText("|cFF"..hexClassColor[DPSMateUser[DetailsArr[pos][3]][2] or "warrior"]..DetailsArr[pos][3].."|r")
+		_G(path..i.."_Target"):SetText("|cFF"..hexClassColor[(DPSMateUser[DetailsArr[pos][3]] and DPSMateUser[DetailsArr[pos][3]][2]) or "warrior"]..DetailsArr[pos][3].."|r")
 		_G(path..i.."_Time"):SetText(DetailsArr[pos][4])
 		_G(path..i.."_CBT"):SetText(strformat("%.2f", DetailsArr[pos][5]).."s")
 	end

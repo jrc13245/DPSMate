@@ -289,7 +289,9 @@ function DPSMate.Modules.DetailsThreat:SelectDetailsButton(p,i,comp,cname)
 	local creature = tonumber(uArr[p])
 	_G("DPSMate_Details_"..comp.."Threat_Log_ScrollButton"..i.."_selected"):Show()
 	
-	local path = db[DPSMateUser[cname or DetailsUser][1]][creature][ability]
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local path = db[uid[1]][creature][ability]
 	local hit, min, max,amount = path[4],path[2],path[3],path[1]
 	
 	_G("DPSMate_Details_"..comp.."Threat_LogDetails_Casts"):SetText("C: "..hit)

@@ -120,6 +120,7 @@ function DPSMate.Modules.Absorbs:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.Absorbs:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local arr = DPSMate:GetMode(k)
 	local b, a, total = {}, {}, 0
 	local ownername = DPSMate:GetUserById(user[1])

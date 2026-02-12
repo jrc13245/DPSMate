@@ -65,6 +65,7 @@ function DPSMate.Modules.AurasUptimers:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.AurasUptimers:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, b, c, total = {}, {}, {}, 0
 	local arr, cbt = DPSMate:GetMode(k)
 	if cbt>1 then

@@ -287,10 +287,12 @@ function DPSMate.Modules.DetailsDamageTaken:SelectDetailsButton(p,i,comp,cname)
 	local creature = tonumber(uArr[p])
 	_G("DPSMate_Details_"..comp.."DamageTaken_Log_ScrollButton"..i.."_selected"):Show()
 	
-	local path = db[DPSMateUser[cname or DetailsUser][1]][creature][ability]
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local path = db[uid[1]][creature][ability]
 	local hit, crit, miss, parry, dodge, resist, hitMin, hitMax, critMin, critMax, hitav, critav, crush, crushMin, crushMax, crushav, block, blockMin, blockMax, blockav = path[1], path[5], path[9], path[10], path[11], path[12], path[2], path[3], path[6], path[7], path[4], path[8], path[15], path[16], path[17], path[18], path[20], path[21], path[22], path[23]
 	local total, max = hit+crit+miss+parry+dodge+resist+crush+block, DPSMate:TMax({hit, crit, miss, parry, dodge, resist, crush, block})
-	
+
 	--_G("DPSMate_Details_"..comp.."DamageTaken_LogDetails_Casts"):SetText("C: "..path[19])
 	-- Block
 	_G("DPSMate_Details_"..comp.."DamageTaken_LogDetails_Amount1_Amount"):SetText(block)

@@ -169,7 +169,8 @@ function DPSMate.Modules.DetailsOHealingTaken:ScrollFrame_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if uArr[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(uArr[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[lineplusoffset][1].." ("..strformat("%.2f", (dArr[lineplusoffset][1]*100/dTot)).."%)")
@@ -291,10 +292,12 @@ function DPSMate.Modules.DetailsOHealingTaken:SelectDetailsButton(p,i, comp, cna
 	local creature = tonumber(uArr[p])
 	_G("DPSMate_Details_"..comp.."OHealingTaken_Log_ScrollButton"..i.."_selected"):Show()
 	
-	local path = db[DPSMateUser[cname or DetailsUser][1]][creature][ability]
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local path = db[uid[1]][creature][ability]
 	local hit, crit, hitav, critav, hitMin, hitMax, critMin, critMax = path[2], path[3], path[4], path[5], path[6], path[7], path[8], path[9]
 	local total, max = hit+crit, DPSMate:TMax({hit, crit})
-	
+
 	-- Hit
 	_G("DPSMate_Details_"..comp.."OHealingTaken_LogDetails_Amount1_Amount"):SetText(hit)
 	_G("DPSMate_Details_"..comp.."OHealingTaken_LogDetails_Amount1_Percent"):SetText(strformat("%.1f", 100*hit/total).."%")

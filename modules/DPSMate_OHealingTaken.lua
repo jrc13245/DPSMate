@@ -53,6 +53,7 @@ function DPSMate.Modules.OHealingTaken:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.OHealingTaken:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, d, total = {}, {}, 0
 	local arr = DPSMate:GetMode(k)
 	if arr[user[1]] then

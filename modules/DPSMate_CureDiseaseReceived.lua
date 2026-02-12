@@ -62,6 +62,7 @@ function DPSMate.Modules.CureDiseaseReceived:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.CureDiseaseReceived:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, b, temp, total = {}, {}, {}, 0
 	local arr = DPSMate:GetMode(k)
 	for cat, val in pairs(arr) do -- 3 Owner

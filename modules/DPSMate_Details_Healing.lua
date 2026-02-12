@@ -172,13 +172,15 @@ function DPSMate.Modules.DetailsHealing:UpdateSumGraph()
 end
 
 function DPSMate.Modules.DetailsHealing:EvalToggleTable(cname)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return {}, {}, 0 end
 	local a,b = {},{}
 	local d = 0
 	for cat, val in db2 do
-		if val[DPSMateUser[cname or DetailsUser][1]] then
+		if val[uid[1]] then
 			local CV = 0
 			local c = {[1] = 0,[2] = {},[3] = {}}
-			for p, v in val[DPSMateUser[cname or DetailsUser][1]] do
+			for p, v in val[uid[1]] do
 				CV = CV + v[1]
 				local i = 1
 				while true do
@@ -281,7 +283,9 @@ function DPSMate.Modules.DetailsHealing:SelectDetails_HealingButton(i, comp, cna
 		end
 		d2 = t2Comp
 	end
-	local user, pet = DPSMateUser[cname or DetailsUser][1], ""
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
+	local user, pet = uid[1], ""
 	if toggle then
 		pathh = "DPSMate_Details_"..comp.."Healing_playerSpells"
 		obj = _G(pathh.."_ScrollFrame")
@@ -352,7 +356,8 @@ function DPSMate.Modules.DetailsHealing:Player_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if d1[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(d1[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(d2[lineplusoffset][1].." ("..strformat("%.2f", (d2[lineplusoffset][1]*100/d3)).."%)")
@@ -457,22 +462,26 @@ function DPSMate.Modules.DetailsHealing:UpdatePie(gg, cname)
 		uArr = DetailsArrComp
 		dTot = DetailsTotalComp
 	end
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
 	gg:ResetPie()
 	for cat, val in uArr do
-		local percent = (db[DPSMateUser[cname or DetailsUser][1]][val][1]*100/dTot)
+		local percent = (db[uid[1]][val][1]*100/dTot)
 		gg:AddPie(percent, 0, DPSMate:GetAbilityById(val))
 	end
 end
 
 function DPSMate.Modules.DetailsHealing:SortLineTable(t, b, cname)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return {} end
 	local newArr = {}
 	if b then
-		for cat, val in t[b][DPSMateUser[cname or DetailsUser][1]] do
+		for cat, val in t[b][uid[1]] do
 			if cat~="i" and val["i"] then
 				for ca, va in val["i"] do
 					local i=1
 					while true do
-						if (not newArr[i]) then 
+						if (not newArr[i]) then
 							tinsert(newArr, i, {ca, va})
 							break
 						end
@@ -486,12 +495,12 @@ function DPSMate.Modules.DetailsHealing:SortLineTable(t, b, cname)
 			end
 		end
 	else
-		for cat, val in t[DPSMateUser[cname or DetailsUser][1]] do
+		for cat, val in t[uid[1]] do
 			if cat~="i" and val["i"] then
 				for ca, va in val["i"] do
 					local i=1
 					while true do
-						if (not newArr[i]) then 
+						if (not newArr[i]) then
 							tinsert(newArr, i, {ca, va})
 							break
 						end
@@ -571,6 +580,8 @@ function DPSMate.Modules.DetailsHealing:UpdateStackedGraph(gg, comp, cname)
 		d4 = PSelected2
 	end
 	
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
 	local Data1 = {}
 	local label = {}
 	local b = {}
@@ -580,7 +591,7 @@ function DPSMate.Modules.DetailsHealing:UpdateStackedGraph(gg, comp, cname)
 	local temp = {}
 	local temp2 = {}
 	if toggle3 then
-		for cat, val in db2[d1[d4]][DPSMateUser[cname or DetailsUser][1]] do
+		for cat, val in db2[d1[d4]][uid[1]] do
 			if cat~="i" and val["i"] then
 				for c, v in val["i"] do
 					local key = tonumber(strformat("%.1f", c))
@@ -641,7 +652,7 @@ function DPSMate.Modules.DetailsHealing:UpdateStackedGraph(gg, comp, cname)
 		gg:ResetData()
 		gg:SetGridSpacing((maxX-min)/7,maxY/7)
 	else
-		for cat, val in db[DPSMateUser[cname or DetailsUser][1]] do
+		for cat, val in db[uid[1]] do
 			if cat~="i" and val["i"] then
 				local temp = {}
 				for c, v in val["i"] do
@@ -736,8 +747,9 @@ function DPSMate.Modules.DetailsHealing:ProcsDropDown()
 	}
 	
 	-- Adding dynamic channel
-	if arr[DPSMateUser[DetailsUser][1]] then
-		for cat, val in pairs(arr[DPSMateUser[DetailsUser][1]]) do
+	local uid = DPSMateUser[DetailsUser]
+	if uid and arr[uid[1]] then
+		for cat, val in pairs(arr[uid[1]]) do
 			local ability = DPSMate:GetAbilityById(cat)
 			if DPSMate:TContains(DPSMate.Parser.procs, ability) then
 				UIDropDownMenu_AddButton{
@@ -748,7 +760,7 @@ function DPSMate.Modules.DetailsHealing:ProcsDropDown()
 			end
 		end
 	end
-	
+
 	if DPSMate_Details_Healing.LastUser~=DetailsUser then
 		UIDropDownMenu_SetSelectedValue(DPSMate_Details_Healing_DiagramLegend_Procs, "None")
 	end
@@ -777,8 +789,9 @@ function DPSMate.Modules.DetailsHealing:ProcsDropDown_CompareHealing()
 	}
 	
 	-- Adding dynamic channel
-	if arr[DPSMateUser[DetailsUserComp][1]] then
-		for cat, val in pairs(arr[DPSMateUser[DetailsUserComp][1]]) do
+	local uidComp = DPSMateUser[DetailsUserComp]
+	if uidComp and arr[uidComp[1]] then
+		for cat, val in pairs(arr[uidComp[1]]) do
 			local ability = DPSMate:GetAbilityById(cat)
 			if DPSMate:TContains(DPSMate.Parser.procs, ability) then
 				UIDropDownMenu_AddButton{
@@ -789,7 +802,7 @@ function DPSMate.Modules.DetailsHealing:ProcsDropDown_CompareHealing()
 			end
 		end
 	end
-	
+
 	if DPSMate_Details_CompareHealing.LastUser~=DetailsUserComp then
 		UIDropDownMenu_SetSelectedValue(DPSMate_Details_CompareHealing_DiagramLegend_Procs, "None")
 	end
@@ -815,12 +828,14 @@ function DPSMate.Modules.DetailsHealing:GetAuraGainedArr(k)
 end
 
 function DPSMate.Modules.DetailsHealing:CheckProcs(name, val, cname)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return false end
 	local arr = DPSMate.Modules.DetailsHealing:GetAuraGainedArr(curKey)
-	if arr[DPSMateUser[cname or DetailsUser][1]] then
-		if arr[DPSMateUser[cname or DetailsUser][1]][name] then
-			for i=1, DPSMate:TableLength(arr[DPSMateUser[cname or DetailsUser][1]][name][1]) do
-				if not arr[DPSMateUser[cname or DetailsUser][1]][name][1][i] or not arr[DPSMateUser[cname or DetailsUser][1]][name][2][i] or arr[DPSMateUser[cname or DetailsUser][1]][name][4] then return false end
-				if val > arr[DPSMateUser[cname or DetailsUser][1]][name][1][i] and val < arr[DPSMateUser[cname or DetailsUser][1]][name][2][i] then
+	if arr[uid[1]] then
+		if arr[uid[1]][name] then
+			for i=1, DPSMate:TableLength(arr[uid[1]][name][1]) do
+				if not arr[uid[1]][name][1][i] or not arr[uid[1]][name][2][i] or arr[uid[1]][name][4] then return false end
+				if val > arr[uid[1]][name][1][i] and val < arr[uid[1]][name][2][i] then
 					return true
 				end
 			end
@@ -830,24 +845,26 @@ function DPSMate.Modules.DetailsHealing:CheckProcs(name, val, cname)
 end
 
 function DPSMate.Modules.DetailsHealing:AddProcPoints(name, dat, cname)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return {false, {}} end
 	local bool, data, LastVal = false, {}, 0
 	local arr = DPSMate.Modules.DetailsHealing:GetAuraGainedArr(curKey)
-	if arr[DPSMateUser[cname or DetailsUser][1]] then
-		if arr[DPSMateUser[cname or DetailsUser][1]][name] then
-			if arr[DPSMateUser[cname or DetailsUser][1]][name][4] then
+	if arr[uid[1]] then
+		if arr[uid[1]][name] then
+			if arr[uid[1]][name][4] then
 				for cat, val in pairs(dat) do
-					for i=1, DPSMate:TableLength(arr[DPSMateUser[cname or DetailsUser][1]][name][1]) do
-						if arr[DPSMateUser[cname or DetailsUser][1]][name][1][i]<=val[1] then
+					for i=1, DPSMate:TableLength(arr[uid[1]][name][1]) do
+						if arr[uid[1]][name][1][i]<=val[1] then
 							local tempbool = true
 							for _, va in pairs(data) do
-								if va[1] == arr[DPSMateUser[cname or DetailsUser][1]][name][1][i] then
+								if va[1] == arr[uid[1]][name][1][i] then
 									tempbool = false
 									break
 								end
 							end
-							if tempbool then	
+							if tempbool then
 								bool = true
-								tinsert(data, {arr[DPSMateUser[cname or DetailsUser][1]][name][1][i], LastVal, {val[1], val[2]}})
+								tinsert(data, {arr[uid[1]][name][1][i], LastVal, {val[1], val[2]}})
 							end
 						end
 					end

@@ -75,6 +75,7 @@ function DPSMate.Modules.FriendlyFire:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.FriendlyFire:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, d, total, temp = {}, {}, 0, {}
 	local arr = DPSMate:GetMode(k)
 	for c, v in pairs(arr) do

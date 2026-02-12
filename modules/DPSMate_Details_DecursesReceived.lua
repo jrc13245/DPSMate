@@ -53,7 +53,8 @@ function DPSMate.Modules.DetailsDecursesReceived:EvalTable(cname)
 				for c, v in pairs(va) do -- 3 Target
 					if c==DPSMateUser[cname or DetailsUser][1] then
 						for ce, ve in pairs(v) do
-							if DPSMate.Modules.Decurses:IsValid(DPSMate:GetAbilityById(ce), DPSMate:GetAbilityById(ca), DPSMateUser[DPSMate:GetUserById(cat)]) then
+							local catname = DPSMate:GetUserById(cat)
+							if catname and DPSMateUser[catname] and DPSMate.Modules.Decurses:IsValid(DPSMate:GetAbilityById(ce), DPSMate:GetAbilityById(ca), DPSMateUser[catname]) then
 								temp[cat][1]=temp[cat][1]+ve
 								CV = CV + ve
 								if ve>0 then

@@ -41,7 +41,9 @@ end
 
 function DPSMate.Modules.DetailsLiftMagic:EvalTable(cname)
 	local a, b, total = {}, {}, 0
-	for cat, val in db[DPSMateUser[cname or DetailsUser][1]] do -- 41 Ability
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return a, total, b end
+	for cat, val in db[uid[1]] do -- 41 Ability
 		if cat~="i" then
 			local CV, ta, tb = 0, {}, {}
 			for ca, va in val do
@@ -160,7 +162,8 @@ function DPSMate.Modules.DetailsLiftMagic:SelectCreatureButton(i, comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if dArr[i][2][lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(dArr[i][2][lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path..line.."_Name"):SetText(user)
 			_G(path..line.."_Name"):SetTextColor(r,g,b)
 			_G(path..line.."_Value"):SetText(dArr[i][3][lineplusoffset][1].." ("..strformat("%.2f", 100*dArr[i][3][lineplusoffset][1]/dArr[i][1]).."%)")

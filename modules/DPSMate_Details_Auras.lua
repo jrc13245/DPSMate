@@ -371,11 +371,13 @@ function DPSMate.Modules.Auras:CreateGraphTable(obj)
 end
 
 function DPSMate.Modules.Auras:UpdateStackedGraph(gg, cname)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return end
 	local Data1 = {}
 	local maxX, maxY = 0, 0
 	local label = {}
-	
-	for cat, val in db[DPSMateUser[cname or DetailsUser][1]] do -- ability
+
+	for cat, val in db[uid[1]] do -- ability
 		local temp = {}
 		for ca, va in val[1] do
 			tinsert(temp, {va, 1})
@@ -392,7 +394,9 @@ end
 
 function DPSMate.Modules.Auras:SortTable(cname)
 	local t, u = {}, {}
-	local a,_,b,c = DPSMate.Modules.AurasUptimers:EvalTable(DPSMateUser[cname or DetailsUser], curKey)
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return {}, {} end
+	local a,_,b,c = DPSMate.Modules.AurasUptimers:EvalTable(uid, curKey)
 	local p1,p2 = 1, 1
 	for cat, val in a do
 		local name = DPSMate:GetAbilityById(val)
@@ -505,10 +509,12 @@ function DPSMate.Modules.Auras:ShowTooltip(obj)
 	if obj and string.find(obj:GetName(), "Compare") then
 		user = DetailsUserComp
 	end
-	if obj.id and db[DPSMateUser[user][1]][DPSMateAbility[obj.id][1]] then
+	local uid = DPSMateUser[user]
+	if not uid then return end
+	if obj.id and db[uid[1]][DPSMateAbility[obj.id][1]] then
 		GameTooltip:SetOwner(obj)
 		GameTooltip:AddLine(obj.id)
-		for cat, val in db[DPSMateUser[user][1]][DPSMateAbility[obj.id][1]][3] do
+		for cat, val in db[uid[1]][DPSMateAbility[obj.id][1]][3] do
 			GameTooltip:AddDoubleLine(DPSMate:GetUserById(cat),val,1,1,1,1,1,1)
 		end
 		GameTooltip:Show()

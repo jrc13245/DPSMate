@@ -111,8 +111,9 @@ function DPSMate.Modules.DetailsDeaths:SelectDetailsButton(i, comp)
 	end
 	for cat, val in uArr[i][3] do
 		if cat~="i" then
-			local name = DPSMate:GetUserById(val[1])
-			local type,r,g,b = "HIT", DPSMate:GetClassColor(DPSMateUser[name][2])
+			local name = DPSMate:GetUserById(val[1]) or "Unknown"
+			local uentry = DPSMateUser[name]
+			local type,r,g,b = "HIT", DPSMate:GetClassColor(uentry and uentry[2])
 			if val[4]==1 then type="CRIT" elseif val[4]==2 then type="CRUSH" end
 			_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..cat.."_Time"):SetText(val[7])
 			_G("DPSMate_Details_"..comp.."Deaths_LogDetails_Child_Row"..cat.."_CombatTime"):SetText(ceil(val[6]).."s")

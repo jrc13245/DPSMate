@@ -155,7 +155,8 @@ function DPSMate.Modules.DetailsAbsorbsTaken:ScrollFrame_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if uArr[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(uArr[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[lineplusoffset][1].." ("..strformat("%.2f", (dArr[lineplusoffset][1]*100/dTot)).."%)")
@@ -273,10 +274,11 @@ function DPSMate.Modules.DetailsAbsorbsTaken:SelectCauseButton(i,p, comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if dArr[i][3][p][2][lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(dArr[i][3][p][2][lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[i][3][p][3][lineplusoffset][1].." ("..strformat("%.2f", (dArr[i][3][p][3][lineplusoffset][1]*100/dArr[i][3][p][1])).."%)")
-			if DPSMateUser[user][2] then
+			if uentry and uentry[2] then
 				_G(path.."_ScrollButton"..line.."_Icon"):SetTexture("Interface\\AddOns\\DPSMate\\images\\class\\"..img)
 			else
 				_G(path.."_ScrollButton"..line.."_Icon"):SetTexture("Interface\\AddOns\\DPSMate\\images\\npc")
@@ -432,17 +434,27 @@ function DPSMate.Modules.DetailsAbsorbsTaken:UpdateStackedGraph(gg, comp, cname)
 		cname = DetailsUserComp
 	end
 	
+	local uentry = DPSMateUser[cname or DetailsUser]
+	if not uentry then
+		gg:ResetData()
+		gg:AddDataSeries(Data1,{1.0,0.0,0.0,0.8}, {}, label)
+		gg:Show()
+		toggle2 = true
+		return
+	end
+
 	if toggle3 then
 		local temp = {}
-		if db[DPSMateUser[cname or DetailsUser][1]] then
-			if db[DPSMateUser[cname or DetailsUser][1]][uArr[dSel]] then
+		if db[uentry[1]] then
+			if db[uentry[1]][uArr[dSel]] then
 				local ownername = DPSMate:GetUserById(uArr[dSel])
-				for ca, va in db[DPSMateUser[cname or DetailsUser][1]][uArr[dSel]]["i"] do
+				local uowner = DPSMateUser[ownername]
+				for ca, va in db[uentry[1]][uArr[dSel]]["i"] do
 					local i, dmg = 1, 5
-					if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]] then
-						if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]] then
-							if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]] then
-								dmg = DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]][14]
+					if DPSMateDamageTaken[1][uentry[1]] then
+						if DPSMateDamageTaken[1][uentry[1]][va[2]] then
+							if DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]] then
+								dmg = DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]][14]
 								if dmg>DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])] then
 									dmg = DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]
 								end
@@ -450,7 +462,7 @@ function DPSMate.Modules.DetailsAbsorbsTaken:UpdateStackedGraph(gg, comp, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((uowner and uowner[8] or 60))/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -477,7 +489,7 @@ function DPSMate.Modules.DetailsAbsorbsTaken:UpdateStackedGraph(gg, comp, cname)
 			tinsert(label, 1, DPSMate:GetAbilityById(cat))
 			tinsert(Data1, 1, val)
 		end
-		
+
 		local min
 		for cat, val in Data1 do
 			local pmin = DPSMate:GetMinValue(val, 1)
@@ -488,44 +500,47 @@ function DPSMate.Modules.DetailsAbsorbsTaken:UpdateStackedGraph(gg, comp, cname)
 		for cat, val in Data1 do
 			Data1[cat] = DPSMate:ScaleDown(val, min)
 		end
-		
+
 		gg:ResetData()
 	else
 		-- Add absorbs points
 		local temp = {}
-		for cat, val in db[DPSMateUser[cname or DetailsUser][1]] do
-			local ownername = DPSMate:GetUserById(cat)
-			for ca, va in val["i"] do
-				local i, dmg = 1, 5
-				if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]] then
-					if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]] then
-						if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]] then
-							dmg = DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]][14]
-							if dmg>DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])] then
-								dmg = DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]
+		if db[uentry[1]] then
+			for cat, val in db[uentry[1]] do
+				local ownername = DPSMate:GetUserById(cat)
+				local uowner = DPSMateUser[ownername]
+				for ca, va in val["i"] do
+					local i, dmg = 1, 5
+					if DPSMateDamageTaken[1][uentry[1]] then
+						if DPSMateDamageTaken[1][uentry[1]][va[2]] then
+							if DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]] then
+								dmg = DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]][14]
+								if dmg>DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])] then
+									dmg = DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]
+								end
 							end
 						end
 					end
-				end
-				if dmg==5 or dmg==0 then
-					dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
-				end
-				if va[4] then
-					dmg = dmg + va[4]
-				end
-				if dmg>0 then
-					if not temp[va[3]] then
-						temp[va[3]] = {}
+					if dmg==5 or dmg==0 then
+						dmg = ceil((1/15)*(((uowner and uowner[8] or 60))/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
-					while true do
-						if (not temp[va[3]][i]) then
-							tinsert(temp[va[3]], i, {va[1], dmg})
-							break
-						elseif va[1]<=temp[va[3]][i][1] then
-							tinsert(temp[va[3]], i, {va[1], dmg})
-							break
+					if va[4] then
+						dmg = dmg + va[4]
+					end
+					if dmg>0 then
+						if not temp[va[3]] then
+							temp[va[3]] = {}
 						end
-						i=i+1
+						while true do
+							if (not temp[va[3]][i]) then
+								tinsert(temp[va[3]], i, {va[1], dmg})
+								break
+							elseif va[1]<=temp[va[3]][i][1] then
+								tinsert(temp[va[3]], i, {va[1], dmg})
+								break
+							end
+							i=i+1
+						end
 					end
 				end
 			end
@@ -534,7 +549,7 @@ function DPSMate.Modules.DetailsAbsorbsTaken:UpdateStackedGraph(gg, comp, cname)
 			tinsert(label, 1, DPSMate:GetAbilityById(cat))
 			tinsert(Data1, 1, val)
 		end
-		
+
 		gg:ResetData()
 	end
 	
@@ -545,50 +560,18 @@ end
 
 function DPSMate.Modules.DetailsAbsorbsTaken:SortLineTable(arr, b, cname)
 	local newArr = {}
+	local uentry = DPSMateUser[cname or DetailsUser]
+	if not uentry then return newArr end
 	if b then
 		local ownername = DPSMate:GetUserById(b)
-		for ca, va in arr[DPSMateUser[cname or DetailsUser][1]][b]["i"] do
-			local i, dmg = 1, 5
-			if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]] then
-				if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]] then
-					if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]] then
-						dmg = DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]][14]
-						if dmg>DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])] then
-							dmg = DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]
-						end
-					end
-				end
-			end
-			if dmg==5 or dmg==0 then
-				dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
-			end
-			if va[4] then
-				dmg = dmg + va[4]
-			end
-			if dmg>0 then
-				while true do
-					if (not newArr[i]) then
-						tinsert(newArr, i, {va[1], dmg})
-						break
-					else
-						if newArr[i][1] > va[1] then
-							tinsert(newArr, i, {va[1], dmg})
-							break
-						end
-					end
-					i=i+1
-				end
-			end
-		end	
-	else
-		for cat, val in arr[DPSMateUser[cname or DetailsUser][1]] do
-			local ownername = DPSMate:GetUserById(cat)
-			for ca, va in pairs(val["i"]) do
+		local uowner = DPSMateUser[ownername]
+		if arr[uentry[1]] and arr[uentry[1]][b] then
+			for ca, va in arr[uentry[1]][b]["i"] do
 				local i, dmg = 1, 5
-				if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]] then
-					if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]] then
-						if DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]] then
-							dmg = DPSMateDamageTaken[1][DPSMateUser[cname or DetailsUser][1]][va[2]][va[3]][14]
+				if DPSMateDamageTaken[1][uentry[1]] then
+					if DPSMateDamageTaken[1][uentry[1]][va[2]] then
+						if DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]] then
+							dmg = DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]][14]
 							if dmg>DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])] then
 								dmg = DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]
 							end
@@ -596,7 +579,7 @@ function DPSMate.Modules.DetailsAbsorbsTaken:SortLineTable(arr, b, cname)
 					end
 				end
 				if dmg==5 or dmg==0 then
-					dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+					dmg = ceil((1/15)*(((uowner and uowner[8] or 60))/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 				end
 				if va[4] then
 					dmg = dmg + va[4]
@@ -613,6 +596,46 @@ function DPSMate.Modules.DetailsAbsorbsTaken:SortLineTable(arr, b, cname)
 							end
 						end
 						i=i+1
+					end
+				end
+			end
+		end
+	else
+		if arr[uentry[1]] then
+			for cat, val in arr[uentry[1]] do
+				local ownername = DPSMate:GetUserById(cat)
+				local uowner = DPSMateUser[ownername]
+				for ca, va in pairs(val["i"]) do
+					local i, dmg = 1, 5
+					if DPSMateDamageTaken[1][uentry[1]] then
+						if DPSMateDamageTaken[1][uentry[1]][va[2]] then
+							if DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]] then
+								dmg = DPSMateDamageTaken[1][uentry[1]][va[2]][va[3]][14]
+								if dmg>DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])] then
+									dmg = DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]
+								end
+							end
+						end
+					end
+					if dmg==5 or dmg==0 then
+						dmg = ceil((1/15)*(((uowner and uowner[8] or 60))/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+					end
+					if va[4] then
+						dmg = dmg + va[4]
+					end
+					if dmg>0 then
+						while true do
+							if (not newArr[i]) then
+								tinsert(newArr, i, {va[1], dmg})
+								break
+							else
+								if newArr[i][1] > va[1] then
+									tinsert(newArr, i, {va[1], dmg})
+									break
+								end
+							end
+							i=i+1
+						end
 					end
 				end
 			end

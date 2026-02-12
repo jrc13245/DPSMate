@@ -60,7 +60,7 @@ function DPSMate.Modules.Activity:GetSortedTable(arr, k)
 end
 
 function DPSMate.Modules.Activity:EvalTable(user, k)
-	
+	if not user then return {}, 0, {} end
 end
 
 function DPSMate.Modules.Activity:GetSettingValues(arr, cbt, k)

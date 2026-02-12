@@ -68,6 +68,7 @@ function DPSMate.Modules.EDD:GetSortedTable(arr,k)
 end
 
 function DPSMate.Modules.EDD:EvalTable(user, k)
+	if not user then return {}, 0, {} end
 	local a, temp, d, total = {}, {}, {}, 0
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

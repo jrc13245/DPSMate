@@ -986,6 +986,10 @@ function DPSMate.Options:UpdateDetails(obj, bool, objname)
 	end
 	local key = obj:GetParent():GetParent():GetParent().Key
 	if obj.user then
+		if not DPSMateUser[obj.user] then
+			DPSMate:SendMessage("Player data not found: "..obj.user)
+			return
+		end
 		DPSMate.RegistredModules[DPSMateSettings["windows"][key]["CurMode"]]:OpenDetails(obj, key, bool)
 	else
 		DPSMate:SendMessage(DPSMate.L["findusererror"])
@@ -1467,6 +1471,7 @@ end
 local AbilityModes = {"damage", "dps", "healing", "hps", "OHPS", "overhealing", "effectivehealing", "effectivehps", "deaths", "interrupts", "dispels", "decurses", "curedisease", "curepoison", "liftmagic", "aurasgained", "auraslost", "aurasuptime", "procs", "casts", "ccbreaker", "healingandabsorbs"}
 function DPSMate.Options:ReportUserDetails(obj, channel, name)
 	local Key, user = obj:GetParent():GetParent():GetParent().Key, obj.user
+	if not user or not DPSMateUser[user] then return end
 	local _, cbt, ecbt = DPSMate:GetMode(Key)
 	local a,b,c
 	if DPSMateSettings["windows"][Key]["CurMode"] == "deaths" then

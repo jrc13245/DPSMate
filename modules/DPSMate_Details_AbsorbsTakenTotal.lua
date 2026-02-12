@@ -132,7 +132,7 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:UpdateStackedGraph()
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -240,7 +240,7 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:AddTotalDataSeries()
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -334,7 +334,7 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:GetTableValues()
 											p = DPSMate.DB.FixedShieldAmounts[shieldname]
 										end
 										if p==5 or p==0 then
-											p = ceil((1/totalHits)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
+											p = ceil((1/totalHits)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
 										end
 										PerShieldAbsorb=PerShieldAbsorb+ss*p
 									end
@@ -440,7 +440,7 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:SortLineTable(uid)
 				end
 			end
 			if dmg==5 or dmg==0 then
-				dmg = ceil((1/15)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+				dmg = ceil((1/15)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 			end
 			if va[4] then
 				dmg = dmg + va[4]
@@ -523,7 +523,8 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:LoadLegendButtons()
 		local name = DPSMate:GetUserById(val[2])
 		local font = _G("DPSMate_Details_AbsorbsTakenTotal_DiagramLegend_Child_C"..cat.."_Font")
 		font:SetText(name)
-		font:SetTextColor(DPSMate:GetClassColor(DPSMateUser[name][2]))
+		local uentry = DPSMateUser[name]
+		font:SetTextColor(DPSMate:GetClassColor(uentry and uentry[2]))
 		_G("DPSMate_Details_AbsorbsTakenTotal_DiagramLegend_Child_C"..cat.."_SwatchBg"):SetTexture(val[1][1],val[1][2],val[1][3],1)
 		_G("DPSMate_Details_AbsorbsTakenTotal_DiagramLegend_Child_C"..cat):Show()
 	end
@@ -552,11 +553,12 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:LoadTable()
 		_G("DPSMate_Details_AbsorbsTakenTotal_PlayerList_Child_R"..i.."_CB").act = false
 	end
 	for cat, val in arr do
-		if DPSMateUser[val[1]][4] then
+		local uentry = DPSMateUser[val[1]]
+		if uentry and uentry[4] then
 			i=i+1
 		else
 			if (cat-i)>30 then break end
-			local r,g,b = DPSMate:GetClassColor(DPSMateUser[val[1]][2])
+			local r,g,b = DPSMate:GetClassColor(uentry and uentry[2])
 			_G("DPSMate_Details_AbsorbsTakenTotal_PlayerList_Child"):SetHeight((cat-i)*30)
 			_G("DPSMate_Details_AbsorbsTakenTotal_PlayerList_Child_R"..(cat-i).."_Name"):SetText(val[1])
 			_G("DPSMate_Details_AbsorbsTakenTotal_PlayerList_Child_R"..(cat-i).."_Name"):SetTextColor(r,g,b)
@@ -577,6 +579,7 @@ function DPSMate.Modules.DetailsAbsorbsTakenTotal:LoadTable()
 end
 
 function DPSMate.Modules.DetailsAbsorbsTakenTotal:ShowTooltip(user, obj)
+	if not DPSMateUser[user] then return end
 	local a,b,c = DPSMate.Modules.AbsorbsTaken:EvalTable(DPSMateUser[user], curKey)
 	local pet = ""
 	GameTooltip:SetOwner(obj, "TOPLEFT")

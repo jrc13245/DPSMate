@@ -48,6 +48,7 @@ function DPSMate.Modules.TPS:GetSortedTable(arr, k, cbt)
 end
 
 function DPSMate.Modules.TPS:EvalTable(user, k, cbt)
+	if not user then return {}, 0, {} end
 	local a,d, total = {}, {}, 0
 	local arr, cbet = DPSMate:GetMode(k)
 	if not arr[user[1]] then return {}, 0, {} end

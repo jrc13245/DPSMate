@@ -41,6 +41,8 @@ end
 
 function DPSMate.Modules.DetailsCureDiseaseReceived:EvalTable(cname)
 	local b, a, temp, total = {}, {}, {}, 0
+	local uid = DPSMateUser[cname or DetailsUser]
+	if not uid then return a, total, b end
 	for cat, val in pairs(db) do -- 3 Owner
 		temp[cat] = {
 			[1] = 0,
@@ -51,7 +53,7 @@ function DPSMate.Modules.DetailsCureDiseaseReceived:EvalTable(cname)
 			if ca~="i" then
 				local ta, tb, CV = {}, {}, 0
 				for c, v in pairs(va) do -- 3 Target
-					if c==DPSMateUser[cname or DetailsUser][1] then
+					if c==uid[1] then
 						for ce, ve in pairs(v) do
 							if DPSMate.Modules.CureDisease:IsValid(DPSMate:GetAbilityById(ce), DPSMate:GetAbilityById(ca)) then
 								temp[cat][1]=temp[cat][1]+ve
@@ -139,7 +141,8 @@ function DPSMate.Modules.DetailsCureDiseaseReceived:ScrollFrame_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if uArr[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(uArr[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local uentry = DPSMateUser[user]
+			local r,g,b,img = DPSMate:GetClassColor(uentry and uentry[2])
 			_G(path..line.."_Name"):SetText(user)
 			_G(path..line.."_Name"):SetTextColor(r,g,b)
 			_G(path..line.."_Value"):SetText(dArr[lineplusoffset][1].." ("..strformat("%.2f", 100*dArr[lineplusoffset][1]/dTot).."%)")

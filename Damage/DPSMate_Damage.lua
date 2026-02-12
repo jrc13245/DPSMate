@@ -37,7 +37,9 @@ function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 	local b, a, total, CV, i, name = {}, {}, 0
 	for cat, val in pairs(arr) do
 		name = DPSMate:GetUserById(cat)
-		if (not DPSMateUser[name][4] or (DPSMateUser[name][4] and not DPSMateSettings["mergepets"])) then
+		if not name or not DPSMateUser[name] then
+			-- skip unknown users
+		elseif (not DPSMateUser[name][4] or (DPSMateUser[name][4] and not DPSMateSettings["mergepets"])) then
 			if DPSMate:ApplyFilter(k, name) then
 				CV = val["i"]
 				if DPSMateSettings["mergepets"] and DPSMateUser[DPSMateUser[name][5]] and arr[DPSMateUser[DPSMateUser[name][5]][1]] and name~=DPSMateUser[name][5] then
@@ -66,6 +68,7 @@ function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 end
 
 function DPSMate.Modules.Damage:EvalTable(user, k)
+	if not user then return end
 	local a, u, p, d, total, pet = {}, {}, {}, {}, 0, false
 	local arr = DPSMate:GetMode(k)
 	if not arr[user[1]] then return end
@@ -74,7 +77,8 @@ function DPSMate.Modules.Damage:EvalTable(user, k)
 		for cat, val in pairs(arr[v]) do
 			if (type(val) == "table" and cat~="i") then
 				if val[13]~=0 and cat~="" then
-					if (DPSMateUser[DPSMate:GetUserById(v)][4]) then pet=true; else pet=false; end
+					local vname = DPSMate:GetUserById(v)
+					if vname and DPSMateUser[vname] and DPSMateUser[vname][4] then pet=true; else pet=false; end
 					local i = 1
 					while true do
 						if (not d[i]) then
