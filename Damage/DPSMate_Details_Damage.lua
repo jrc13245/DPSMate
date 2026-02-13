@@ -550,13 +550,15 @@ function DPSMate.Modules.DetailsDamage:UpdatePie(gg, cname)
 	if not uid then return end
 	gg:ResetPie()
 	for cat, val in uArr do
-		if (dArr[cat][2]) and DPSMateSettings["mergepets"] and uid[5] ~= (cname or DetailsUser) then
+		if dArr[cat] and (dArr[cat][2]) and DPSMateSettings["mergepets"] and uid[5] ~= (cname or DetailsUser) then
 			user=DPSMateUser[uid[5]][1]
 		else
 			user=uid[1]
 		end
-		local percent = (db[user][val][13]*100/dTot)
-		gg:AddPie(percent, 0, DPSMate:GetAbilityById(val))
+		if db[user] and db[user][val] then
+			local percent = (db[user][val][13]*100/dTot)
+			gg:AddPie(percent, 0, DPSMate:GetAbilityById(val))
+		end
 	end
 end
 

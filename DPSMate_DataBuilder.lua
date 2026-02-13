@@ -877,6 +877,16 @@ function DPSMate.DB:OnGroupUpdate()
 		type = "party"
 		num = GetNumPartyMembers()
 	end
+	-- Collect all player names first to detect pet name conflicts
+	local groupPlayerNames = {}
+	for i=1, num do
+		if UnitIsConnected(type..i) then
+			local pname = UnitName(type..i)
+			if pname then groupPlayerNames[pname] = true end
+		end
+	end
+	local selfName = UnitName("player")
+	if selfName then groupPlayerNames[selfName] = true end
 	for i=1, num do
 		if UnitIsConnected(type..i) then
 			local name = UnitName(type..i)
@@ -890,20 +900,14 @@ function DPSMate.DB:OnGroupUpdate()
 				DPSMateUser[name][2] = strlower(classEng)
 			end
 			DPSMateUser[name][4] = false
-			if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" then
+			DPSMateUser[name][6] = nil
+			if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
 				self:BuildUser(pet)
 				DPSMateUser[pet][4] = true
 				DPSMateUser[name][5] = pet
 				DPSMateUser[pet][6] = DPSMateUser[name][1]
 				DPSMate.Parser.TargetParty[pet] = type.."pet"..i
-			end
-			if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not DPSMate.Parser.TargetParty[pet] then -- LAYT ???
-				DPSMateUser[pet][4] = false
-				DPSMateUser[pet][6] = ""
-				DPSMateUser[name][5] = ""
-			end
-			if DPSMateUser[name][4] then
-				DPSMateUser[name][4] = false
+			elseif pet and groupPlayerNames[pet] then
 				DPSMateUser[name][5] = ""
 			end
 			if fac == DPSMate.L["alliance"] then
@@ -923,12 +927,14 @@ function DPSMate.DB:OnGroupUpdate()
 	local pet = UnitName("pet")
 	local name = UnitName("player")
 	self:BuildUser(name, nil)
-	if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" then
+	if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
 		self:BuildUser(pet, nil)
 		DPSMateUser[pet][4] = true
 		DPSMateUser[name][5] = pet
 		DPSMateUser[pet][6] = DPSMateUser[name][1]
 		DPSMate.Parser.TargetParty[pet] = "pet"
+	elseif pet and groupPlayerNames[pet] then
+		DPSMateUser[name][5] = ""
 	end
 	DPSMate.Parser.TargetParty[name] = "player"
 	DPSMate.Parser:AssociateShaman("None", "None", true)

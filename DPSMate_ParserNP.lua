@@ -79,7 +79,10 @@ local function NormalizeGUID(guid)
 end
 
 -- Scan all known unit tokens and cache their GUIDs
+local ownerCache = {}
+
 local function RefreshGUIDCache()
+	ownerCache = {}
 	local name, _, guid
 	-- Player
 	_, guid = UnitExists("player")
@@ -164,6 +167,22 @@ local function ResolveName(guid)
 	return nil
 end
 
+local function ResolveOwner(guid)
+	if not guid then return nil end
+	local key = NormalizeGUID(guid)
+	if ownerCache[key] ~= nil then return ownerCache[key] end
+	local ok, exists, ownerGuid = pcall(UnitExists, guid .. "owner")
+	if ok and exists and ownerGuid then
+		local ownerName = ResolveName(ownerGuid)
+		if ownerName then
+			ownerCache[key] = ownerName
+			return ownerName
+		end
+	end
+	ownerCache[key] = false
+	return nil
+end
+
 ----------------------------------------------------------------------------------
 --------------            HitInfo / VictimState Constants         --------------
 ----------------------------------------------------------------------------------
@@ -236,6 +255,18 @@ local spellDamageEvents = {
 	"CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE",
 }
 
+local petStringEvents = {
+	"CHAT_MSG_COMBAT_PET_HITS",
+	"CHAT_MSG_COMBAT_PET_MISSES",
+	"CHAT_MSG_SPELL_PET_DAMAGE",
+}
+
+local petRawEvents = {
+	["CHAT_MSG_COMBAT_PET_HITS"] = "hits",
+	["CHAT_MSG_COMBAT_PET_MISSES"] = "misses",
+	["CHAT_MSG_SPELL_PET_DAMAGE"] = "spelldamage",
+}
+
 -- Remove event from DPSMate.Events table so Disable/Enable cycle stays consistent
 local function RemoveFromEventsTable(eventName)
 	for i, v in ipairs(DPSMate.Events) do
@@ -273,6 +304,9 @@ local function HandleAutoAttack(attackerGuid, targetGuid, totalDamage, hitInfo, 
 	local attackerName = ResolveName(attackerGuid)
 	local targetName = ResolveName(targetGuid)
 	if not attackerName or not targetName then return end
+
+	local ownerName = ResolveOwner(attackerGuid)
+	if ownerName then attackerName = ownerName end
 
 	local attackerFriendly = IsFriendly(attackerName)
 	local targetFriendly = IsFriendly(targetName)
@@ -396,6 +430,9 @@ local function HandleSpellDamage(targetGuid, casterGuid, spellId, amount, mitiga
 	local targetName = ResolveName(targetGuid)
 	if not casterName or not targetName then return end
 
+	local ownerName = ResolveOwner(casterGuid)
+	if ownerName then casterName = ownerName end
+
 	local ability = GetSpellName(spellId)
 	if ability == "Unknown" then return end
 
@@ -499,6 +536,9 @@ local function HandleSpellMissOther(spellId, casterGuid, targetGuid, missInfo)
 	local targetName = ResolveName(targetGuid)
 	if not casterName or not targetName then return end
 
+	local ownerName = ResolveOwner(casterGuid)
+	if ownerName then casterName = ownerName end
+
 	local ability = GetSpellName(spellId)
 	if ability == "Unknown" then return end
 
@@ -542,6 +582,43 @@ NPParser.SPELL_MISS_OTHER = function()
 end
 
 ----------------------------------------------------------------------------------
+--------------            RAW_COMBATLOG Handler (SuperWoW only)   --------------
+----------------------------------------------------------------------------------
+
+local function ExtractFirstGUID(rawText)
+	local _, _, g, n = string.find(rawText, "|Hunit:(0x%x+)|h([^|]+)|h")
+	return g, n
+end
+
+local function StripGUIDLinks(rawText)
+	return string.gsub(rawText, "|Hunit:0x%x+|h([^|]+)|h", "%1")
+end
+
+NPParser.RAW_COMBATLOG = function()
+	local petType = petRawEvents[arg1]
+	if not petType then return end
+
+	local sourceGuid, sourceName = ExtractFirstGUID(arg2)
+	local ownerName = sourceGuid and ResolveOwner(sourceGuid)
+	local cleanText = StripGUIDLinks(arg2)
+
+	if ownerName and sourceName then
+		local i, j = string.find(cleanText, sourceName, 1, true)
+		if i then
+			cleanText = string.sub(cleanText, 1, i - 1) .. ownerName .. string.sub(cleanText, j + 1)
+		end
+	end
+
+	if petType == "hits" then
+		DPSMate.Parser:FriendlyPlayerHits(cleanText)
+	elseif petType == "misses" then
+		DPSMate.Parser:FriendlyPlayerMisses(cleanText)
+	else
+		DPSMate.Parser:FriendlyPlayerDamage(cleanText)
+	end
+end
+
+----------------------------------------------------------------------------------
 --------------            Initialization                          --------------
 ----------------------------------------------------------------------------------
 
@@ -564,41 +641,45 @@ NPParser:SetScript("OnEvent", function()
 			hasSuperWoW = true
 		end
 
-		-- Both Nampower AND SuperWoW required (SuperWoW for GUID resolution)
-		if not hasNampower or not hasSuperWoW then
+		-- SuperWoW required for GUID resolution (owner detection)
+		if not hasSuperWoW then
 			return
 		end
 
-		-- Enable CVar-gated events
-		if NPVersionAtLeast(2, 24, 0) then
-			SetCVar("NP_EnableAutoAttackEvents", "1")
-		end
-
-		-- Build initial GUID cache from roster
+		-- Shared: GUID cache + roster events
 		RefreshGUIDCache()
-
-		-- Register roster/target events to keep GUID cache fresh
 		NPParser:RegisterEvent("RAID_ROSTER_UPDATE")
 		NPParser:RegisterEvent("PARTY_MEMBERS_CHANGED")
 		NPParser:RegisterEvent("PLAYER_TARGET_CHANGED")
 		NPParser:RegisterEvent("PLAYER_PET_CHANGED")
 
-		-- Register Nampower events and unregister replaced string parser events
+		if hasNampower then
+			-- Nampower + SuperWoW: structured events with owner resolution
 
-		-- v2.24+: Auto attack events
-		if NPVersionAtLeast(2, 24, 0) then
-			NPParser:RegisterEvent("AUTO_ATTACK_SELF")
-			NPParser:RegisterEvent("AUTO_ATTACK_OTHER")
-			UnregisterStringParserEvents(autoAttackEvents)
-		end
+			-- Enable CVar-gated events
+			if NPVersionAtLeast(2, 24, 0) then
+				SetCVar("NP_EnableAutoAttackEvents", "1")
+			end
 
-		-- v2.31+: Spell damage + spell miss events (both needed for complete replacement)
-		if NPVersionAtLeast(2, 31, 0) then
-			NPParser:RegisterEvent("SPELL_DAMAGE_EVENT_SELF")
-			NPParser:RegisterEvent("SPELL_DAMAGE_EVENT_OTHER")
-			NPParser:RegisterEvent("SPELL_MISS_SELF")
-			NPParser:RegisterEvent("SPELL_MISS_OTHER")
-			UnregisterStringParserEvents(spellDamageEvents)
+			-- v2.24+: Auto attack events
+			if NPVersionAtLeast(2, 24, 0) then
+				NPParser:RegisterEvent("AUTO_ATTACK_SELF")
+				NPParser:RegisterEvent("AUTO_ATTACK_OTHER")
+				UnregisterStringParserEvents(autoAttackEvents)
+			end
+
+			-- v2.31+: Spell damage + spell miss events
+			if NPVersionAtLeast(2, 31, 0) then
+				NPParser:RegisterEvent("SPELL_DAMAGE_EVENT_SELF")
+				NPParser:RegisterEvent("SPELL_DAMAGE_EVENT_OTHER")
+				NPParser:RegisterEvent("SPELL_MISS_SELF")
+				NPParser:RegisterEvent("SPELL_MISS_OTHER")
+				UnregisterStringParserEvents(spellDamageEvents)
+			end
+		else
+			-- SuperWoW only: RAW_COMBATLOG for pet event owner resolution
+			UnregisterStringParserEvents(petStringEvents)
+			NPParser:RegisterEvent("RAW_COMBATLOG")
 		end
 
 		NPParser:UnregisterEvent("PLAYER_ENTERING_WORLD")
