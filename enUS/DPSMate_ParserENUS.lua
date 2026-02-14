@@ -1727,6 +1727,7 @@ function DPSMate.Parser:SpellSelfBuff(msg)
 		local hit, crit = 0,0
 		if choice == 1 then crit = 1 else hit = 1 end
 		i,j = strfind(msg, " for ", k, true)
+		if not i then return end
 		local target = strsub(msg, k, i-1)
 		k = j+1
 		i,j = strfind(msg, ".", k, true)
