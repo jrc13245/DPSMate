@@ -306,9 +306,15 @@ local function HandleAutoAttack(attackerGuid, targetGuid, totalDamage, hitInfo, 
 	if not attackerName or not targetName then return end
 
 	local ownerName = ResolveOwner(attackerGuid)
-	if ownerName then attackerName = ownerName end
+	if ownerName then
+		DB:BuildUser(attackerName)
+		DB:BuildUser(ownerName)
+		DPSMateUser[attackerName][4] = true
+		DPSMateUser[attackerName][6] = DPSMateUser[ownerName][1]
+		DPSMateUser[ownerName][5] = attackerName
+	end
 
-	local attackerFriendly = IsFriendly(attackerName)
+	local attackerFriendly = IsFriendly(ownerName or attackerName)
 	local targetFriendly = IsFriendly(targetName)
 
 	-- Determine hit type from hitInfo bitmask
@@ -431,12 +437,18 @@ local function HandleSpellDamage(targetGuid, casterGuid, spellId, amount, mitiga
 	if not casterName or not targetName then return end
 
 	local ownerName = ResolveOwner(casterGuid)
-	if ownerName then casterName = ownerName end
+	if ownerName then
+		DB:BuildUser(casterName)
+		DB:BuildUser(ownerName)
+		DPSMateUser[casterName][4] = true
+		DPSMateUser[casterName][6] = DPSMateUser[ownerName][1]
+		DPSMateUser[ownerName][5] = casterName
+	end
 
 	local ability = GetSpellName(spellId)
 	if ability == "Unknown" then return end
 
-	local casterFriendly = IsFriendly(casterName)
+	local casterFriendly = IsFriendly(ownerName or casterName)
 	local targetFriendly = IsFriendly(targetName)
 
 	-- Determine if periodic
@@ -537,12 +549,18 @@ local function HandleSpellMissOther(spellId, casterGuid, targetGuid, missInfo)
 	if not casterName or not targetName then return end
 
 	local ownerName = ResolveOwner(casterGuid)
-	if ownerName then casterName = ownerName end
+	if ownerName then
+		DB:BuildUser(casterName)
+		DB:BuildUser(ownerName)
+		DPSMateUser[casterName][4] = true
+		DPSMateUser[casterName][6] = DPSMateUser[ownerName][1]
+		DPSMateUser[ownerName][5] = casterName
+	end
 
 	local ability = GetSpellName(spellId)
 	if ability == "Unknown" then return end
 
-	local casterFriendly = IsFriendly(casterName)
+	local casterFriendly = IsFriendly(ownerName or casterName)
 	local targetFriendly = IsFriendly(targetName)
 
 	local miss, resist, dodge, parry, block = 0, 0, 0, 0, 0
@@ -603,9 +621,10 @@ NPParser.RAW_COMBATLOG = function()
 	local cleanText = StripGUIDLinks(arg2)
 
 	if ownerName and sourceName then
+		local replacement = sourceName .. " (" .. ownerName .. ")"
 		local i, j = string.find(cleanText, sourceName, 1, true)
 		if i then
-			cleanText = string.sub(cleanText, 1, i - 1) .. ownerName .. string.sub(cleanText, j + 1)
+			cleanText = string.sub(cleanText, 1, i - 1) .. replacement .. string.sub(cleanText, j + 1)
 		end
 	end
 

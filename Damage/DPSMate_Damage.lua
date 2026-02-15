@@ -36,6 +36,7 @@ local pairs = pairs
 function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 	local b, a, total, CV, i, name = {}, {}, 0
 	local petsByOwner = DPSMateSettings["mergepets"] and DPSMate:GetPetsByOwner(arr) or {}
+	local processedOwners = {}
 	for cat, val in pairs(arr) do
 		name = DPSMate:GetUserById(cat)
 		if not name or not DPSMateUser[name] then
@@ -44,6 +45,7 @@ function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 			if DPSMate:ApplyFilter(k, name) then
 				CV = val["i"]
 				if DPSMateSettings["mergepets"] and petsByOwner[cat] then
+					processedOwners[cat] = true
 					for _, petCat in pairs(petsByOwner[cat]) do
 						if arr[petCat] then
 							CV = CV + arr[petCat]["i"]
@@ -69,6 +71,40 @@ function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 			end
 		end
 	end
+	-- Handle owners with no personal damage but with pets that have damage
+	if DPSMateSettings["mergepets"] then
+		for oid, petList in pairs(petsByOwner) do
+			if not processedOwners[oid] and not arr[oid] then
+				name = DPSMate:GetUserById(oid)
+				if name and DPSMateUser[name] and not DPSMateUser[name][4] and DPSMate:ApplyFilter(k, name) then
+					CV = 0
+					for _, petCat in pairs(petList) do
+						if arr[petCat] then
+							CV = CV + arr[petCat]["i"]
+						end
+					end
+					if CV > 0 then
+						i = 1
+						while true do
+							if (not b[i]) then
+								tinsert(b, i, CV)
+								tinsert(a, i, name)
+								break
+							else
+								if b[i] < CV then
+									tinsert(b, i, CV)
+									tinsert(a, i, name)
+									break
+								end
+							end
+							i=i+1
+						end
+						total = total + CV
+					end
+				end
+			end
+		end
+	end
 	return b, total, a
 end
 
@@ -76,7 +112,6 @@ function DPSMate.Modules.Damage:EvalTable(user, k)
 	if not user then return end
 	local a, u, p, d, total, pet = {}, {}, {}, {}, 0, false
 	local arr = DPSMate:GetMode(k)
-	if not arr[user[1]] then return end
 	u = {user[1]}
 	if DPSMateSettings["mergepets"] then
 		local petsByOwner = DPSMate:GetPetsByOwner(arr)
@@ -86,31 +121,34 @@ function DPSMate.Modules.Damage:EvalTable(user, k)
 			end
 		end
 	end
+	if not arr[user[1]] and getn(u) <= 1 then return end
 	for _, v in pairs(u) do
-		for cat, val in pairs(arr[v]) do
-			if (type(val) == "table" and cat~="i") then
-				if val[13]~=0 and cat~="" then
-					local vname = DPSMate:GetUserById(v)
-					if vname and DPSMateUser[vname] and DPSMateUser[vname][4] then pet=true; else pet=false; end
-					local i = 1
-					while true do
-						if (not d[i]) then
-							tinsert(a, i, cat)
-							tinsert(d, i, {val[13], pet})
-							break
-						else
-							if (d[i][1] < val[13]) then
+		if arr[v] then
+			for cat, val in pairs(arr[v]) do
+				if (type(val) == "table" and cat~="i") then
+					if val[13]~=0 and cat~="" then
+						local vname = DPSMate:GetUserById(v)
+						if vname and DPSMateUser[vname] and DPSMateUser[vname][4] then pet=true; else pet=false; end
+						local i = 1
+						while true do
+							if (not d[i]) then
 								tinsert(a, i, cat)
 								tinsert(d, i, {val[13], pet})
 								break
+							else
+								if (d[i][1] < val[13]) then
+									tinsert(a, i, cat)
+									tinsert(d, i, {val[13], pet})
+									break
+								end
 							end
+							i = i + 1
 						end
-						i = i + 1
 					end
 				end
 			end
+			total=total+arr[v]["i"]
 		end
-		total=total+arr[v]["i"]
 	end
 	return a, total, d
 end
@@ -143,6 +181,18 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 		local i, p = 1, 0
 		local pet = 0
 		local edtaken, edtakenPet = {}, {}
+
+		-- Find all pet IDs for this owner
+		local ownerId = DPSMateUser[user][1]
+		local petIds = {}
+		local petNames = {}
+		for pname, pdata in pairs(DPSMateUser) do
+			if pdata[4] and pdata[6] == ownerId then
+				tinsert(petIds, pdata[1])
+				tinsert(petNames, pname)
+			end
+		end
+
 		-- Getting the value of the pet
 		while a and a[i] do
 			if c[i][2] then
@@ -150,19 +200,19 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 			end
 			i = i + 1
 		end
-		
+
 		-- Getting edt values
 		for cat, val in pairs(db) do
-			if val[DPSMateUser[user][1]] then
-				if val[DPSMateUser[user][1]]["i"]>0 then
+			if val[ownerId] then
+				if val[ownerId]["i"]>0 then
 					i = 1
 					while true do
 						if (not edtaken[i]) then
-							tinsert(edtaken, i, {cat, val[DPSMateUser[user][1]]["i"]})
+							tinsert(edtaken, i, {cat, val[ownerId]["i"]})
 							break
 						else
-							if (edtaken[i][2] < val[DPSMateUser[user][1]]["i"]) then
-								tinsert(edtaken, i, {cat, val[DPSMateUser[user][1]]["i"]})
+							if (edtaken[i][2] < val[ownerId]["i"]) then
+								tinsert(edtaken, i, {cat, val[ownerId]["i"]})
 								break
 							end
 						end
@@ -170,47 +220,53 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 					end
 				end
 			end
-			if DPSMateUser[DPSMateUser[user][5]] and val[DPSMateUser[DPSMateUser[user][5]][1]] then
-				if val[DPSMateUser[DPSMateUser[user][5]][1]]["i"]>0 then
-					i = 1
-					while true do
-						if (not edtakenPet[i]) then
-							tinsert(edtakenPet, i, {cat, val[DPSMateUser[DPSMateUser[user][5]][1]]["i"]})
+			-- Aggregate EDT from all pets for this enemy
+			local petTotal = 0
+			for _, pid in pairs(petIds) do
+				if val[pid] and val[pid]["i"] > 0 then
+					petTotal = petTotal + val[pid]["i"]
+				end
+			end
+			if petTotal > 0 then
+				i = 1
+				while true do
+					if (not edtakenPet[i]) then
+						tinsert(edtakenPet, i, {cat, petTotal})
+						break
+					else
+						if (edtakenPet[i][2] < petTotal) then
+							tinsert(edtakenPet, i, {cat, petTotal})
 							break
-						else
-							if (edtakenPet[i][2] < val[DPSMateUser[DPSMateUser[user][5]][1]]["i"]) then
-								tinsert(edtakenPet, i, {cat, val[DPSMateUser[DPSMateUser[user][5]][1]]["i"]})
-								break
-							end
 						end
-						i = i + 1
 					end
+					i = i + 1
 				end
 			end
 		end
-	
+
 		GameTooltip:AddLine(DPSMate.L["tttop"]..DPSMateSettings["subviewrows"]..DPSMate.L["ttdamage"]..DPSMate.L["ttabilities"])
 		for i=1, DPSMateSettings["subviewrows"] do
 			if not a[i] then break end
-			if not c[i][2] then 
+			if not c[i][2] then
 				GameTooltip:AddDoubleLine(i..". "..DPSMate:GetAbilityById(a[i]),c[i][1].." ("..strformat("%.2f", 100*c[i][1]/(b-pet)).."%)",1,1,1,1,1,1)
 			end
 		end
-		
+
 		GameTooltip:AddLine(DPSMate.L["tttop"]..DPSMateSettings["subviewrows"]..DPSMate.L["ttattacked"])
 		for i=1, DPSMateSettings["subviewrows"] do
 			if not edtaken[i] then break end
 			GameTooltip:AddDoubleLine(i..". "..DPSMate:GetUserById(edtaken[i][1]), edtaken[i][2].." ("..strformat("%.2f", 100*edtaken[i][2]/(b-pet)).."%)", 1,1,1,1,1,1)
 		end
-		
-		if pet~=0 and DPSMateUser[user][5] then
+
+		if pet~=0 and getn(petIds) > 0 then
+			local petDisplay = table.concat(petNames, ", ")
 			GameTooltip:AddLine(" ")
-			GameTooltip:AddDoubleLine(DPSMate.L["ttpet2"],DPSMateUser[user][5].."<"..user.."> ("..strformat("%.2f", 100*pet/b).."%)",1,0.82,0,1,1,1)
+			GameTooltip:AddDoubleLine(DPSMate.L["ttpet2"],petDisplay.."<"..user.."> ("..strformat("%.2f", 100*pet/b).."%)",1,0.82,0,1,1,1)
 			GameTooltip:AddLine(DPSMate.L["tttop"]..DPSMateSettings["subviewrows"]..DPSMate.L["ttpet"]..DPSMate.L["ttdamage"]..DPSMate.L["ttabilities"])
 			i, p = 1,1
 			while DPSMateSettings["subviewrows"]>=p do
 				if not a[i] then break end
-				if c[i][2] then 
+				if c[i][2] then
 					GameTooltip:AddDoubleLine(p..". "..DPSMate:GetAbilityById(a[i]),c[i][1].." ("..strformat("%.2f", 100*c[i][1]/pet).."%)",1,1,1,1,1,1)
 					p = p + 1
 				end

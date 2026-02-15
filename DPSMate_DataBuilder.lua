@@ -958,6 +958,7 @@ function DPSMate.DB:BuildUser(Dname, Dclass)
 		local ownerId = self:BuildUser(owner)
 		DPSUser[Dname][4] = true
 		DPSUser[Dname][6] = ownerId
+		DPSUser[owner][5] = Dname
 	end
 	return DPSUser[Dname][1]
 end
