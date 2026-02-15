@@ -339,21 +339,23 @@ function DPSMate.Modules.DetailsDamageTotal:SortLineTable(uid)
 		end
 	end
 	-- Pet
-	if uentry[5] and uentry[5]~=user and DPSMateUser[uentry[5]] and DPSMateSettings["mergepets"]then
-		if db[DPSMateUser[uentry[5]][1]] then
-			for cat, val in db[DPSMateUser[uentry[5]][1]] do
-				if cat~="i" and val["i"] then
-					for c,v in val["i"] do
-						local i = 1
-						while true do
-							if not newArr[i] then
-								tinsert(newArr, i, {c,v})
-								break
-							elseif c<=newArr[i][1] then
-								tinsert(newArr, i, {c,v})
-								break
+	if DPSMateSettings["mergepets"] then
+		for pName, pEntry in pairs(DPSMateUser) do
+			if pEntry[4] and pEntry[6] == uentry[1] and pName ~= user and db[pEntry[1]] then
+				for cat, val in db[pEntry[1]] do
+					if cat~="i" and val["i"] then
+						for c,v in val["i"] do
+							local i = 1
+							while true do
+								if not newArr[i] then
+									tinsert(newArr, i, {c,v})
+									break
+								elseif c<=newArr[i][1] then
+									tinsert(newArr, i, {c,v})
+									break
+								end
+								i = i+1
 							end
-							i = i+1
 						end
 					end
 				end

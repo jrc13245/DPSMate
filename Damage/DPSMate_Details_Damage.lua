@@ -202,28 +202,30 @@ function DPSMate.Modules.DetailsDamage:EvalToggleTable(comp)
 			end
 			c[1] = val[uid[1]]["i"]
 			-- pet
-			if uid[5] and DPSMateUser[uid[5]] and DPSMateSettings["mergepets"] and uid[5] ~= (comp or DetailsUser) then
-				if val[DPSMateUser[uid[5]][1]] then
-					for p, v in pairs(val[DPSMateUser[uid[5]][1]]) do
-						if p ~= "i" then
-							local i = 1
-							while true do
-								if (not c[2][i]) then
-									tinsert(c[3], i, v)
-									tinsert(c[2], i, p)
-									break
-								else
-									if c[3][i][13] < v[13] then
+			if DPSMateSettings["mergepets"] then
+				for pName, pEntry in pairs(DPSMateUser) do
+					if pEntry[4] and pEntry[6] == uid[1] and pName ~= (comp or DetailsUser) and val[pEntry[1]] then
+						for p, v in pairs(val[pEntry[1]]) do
+							if p ~= "i" then
+								local i = 1
+								while true do
+									if (not c[2][i]) then
 										tinsert(c[3], i, v)
 										tinsert(c[2], i, p)
 										break
+									else
+										if c[3][i][13] < v[13] then
+											tinsert(c[3], i, v)
+											tinsert(c[2], i, p)
+											break
+										end
 									end
+									i=i+1
 								end
-								i=i+1
 							end
 						end
+						c[1] = c[1] + val[pEntry[1]]["i"]
 					end
-					c[1] = c[1] + val[DPSMateUser[uid[5]][1]]["i"]
 				end
 			end
 			local i = 1
@@ -450,7 +452,14 @@ function DPSMate.Modules.DetailsDamage:SelectDetailsButton(i, comp, cname)
 		obj = _G(pathh.."_ScrollFrame")
 		lineplusoffset = i + (FauxScrollFrame_GetOffset(obj) or 0)
 		local ability = tonumber(uArr[lineplusoffset])
-		if (db[uid[1]][ability]) then user=uid[1]; pet=0; else if uid[5] and uid[5]~=(cname or DetailsUser) then user=DPSMateUser[uid[5]][1]; pet=5; else user=uid[1]; pet=0; end end
+		if (db[uid[1]][ability]) then user=uid[1]; pet=0; else
+			user=uid[1]; pet=0
+			for pName, pEntry in pairs(DPSMateUser) do
+				if pEntry[4] and pEntry[6] == uid[1] and pName ~= (cname or DetailsUser) and db[pEntry[1]] and db[pEntry[1]][ability] then
+					user=pEntry[1]; pet=5; break
+				end
+			end
+		end
 		path = db[user][tonumber(uArr[lineplusoffset])]
 	end
 	if comp ~= "" and comp~=nil then
@@ -549,11 +558,23 @@ function DPSMate.Modules.DetailsDamage:UpdatePie(gg, cname)
 	local uid = DPSMateUser[cname or DetailsUser]
 	if not uid then return end
 	gg:ResetPie()
+	local petIds = {}
+	if DPSMateSettings["mergepets"] then
+		for pName, pEntry in pairs(DPSMateUser) do
+			if pEntry[4] and pEntry[6] == uid[1] and pName ~= (cname or DetailsUser) then
+				petIds[pEntry[1]] = true
+			end
+		end
+	end
 	for cat, val in uArr do
-		if dArr[cat] and (dArr[cat][2]) and DPSMateSettings["mergepets"] and uid[5] ~= (cname or DetailsUser) then
-			user=DPSMateUser[uid[5]][1]
-		else
-			user=uid[1]
+		local user = uid[1]
+		if dArr[cat] and dArr[cat][2] and DPSMateSettings["mergepets"] then
+			for petId in pairs(petIds) do
+				if db[petId] and db[petId][val] then
+					user = petId
+					break
+				end
+			end
 		end
 		if db[user] and db[user][val] then
 			local percent = (db[user][val][13]*100/dTot)
@@ -668,35 +689,37 @@ function DPSMate.Modules.DetailsDamage:UpdateStackedGraph(gg, comp, cname)
 		end
 		
 		-- pet
-		if uid[5] and DPSMateUser[uid[5]] and DPSMateSettings["mergepets"] and uid[5] ~= (cname or DetailsUser) then
-			if db2[d1[d4]][DPSMateUser[uid[5]][1]] then
-				for cat, val in pairs(db2[d1[d4]][DPSMateUser[uid[5]][1]]) do
-					if cat~="i" and val["i"] then
-						for c, v in pairs(val["i"]) do
-							local key = tonumber(strformat("%.1f", c))
-							if not temp[cat] then
-								temp[cat] = {}
-								temp2[cat] = 0
-							end
-							if p[key] then
-								p[key] = p[key] + v
-							else
-								p[key] = v
-							end
-							local i = 1
-							while true do
-								if not temp[cat][i] then
-									tinsert(temp[cat], i, {c,v})
-									break
-								elseif c<=temp[cat][i][1] then
-									tinsert(temp[cat], i, {c,v})
-									break
+		if DPSMateSettings["mergepets"] then
+			for pName, pEntry in pairs(DPSMateUser) do
+				if pEntry[4] and pEntry[6] == uid[1] and pName ~= (cname or DetailsUser) and db2[d1[d4]][pEntry[1]] then
+					for cat, val in pairs(db2[d1[d4]][pEntry[1]]) do
+						if cat~="i" and val["i"] then
+							for c, v in pairs(val["i"]) do
+								local key = tonumber(strformat("%.1f", c))
+								if not temp[cat] then
+									temp[cat] = {}
+									temp2[cat] = 0
 								end
-								i = i + 1
+								if p[key] then
+									p[key] = p[key] + v
+								else
+									p[key] = v
+								end
+								local i = 1
+								while true do
+									if not temp[cat][i] then
+										tinsert(temp[cat], i, {c,v})
+										break
+									elseif c<=temp[cat][i][1] then
+										tinsert(temp[cat], i, {c,v})
+										break
+									end
+									i = i + 1
+								end
+								temp2[cat] = temp2[cat] + val[13]
+								maxY = math.max(p[key], maxY)
+								maxX = math.max(c, maxX)
 							end
-							temp2[cat] = temp2[cat] + val[13]
-							maxY = math.max(p[key], maxY)
-							maxX = math.max(c, maxX)
 						end
 					end
 				end
@@ -776,46 +799,48 @@ function DPSMate.Modules.DetailsDamage:UpdateStackedGraph(gg, comp, cname)
 			end
 		end
 		-- Pet
-		if uid[5] and DPSMateUser[uid[5]] and DPSMateSettings["mergepets"] and uid[5] ~= (cname or DetailsUser) then
-			if db[DPSMateUser[uid[5]][1]] then
-				for cat, val in pairs(db[DPSMateUser[uid[5]][1]]) do
-					if cat~="i" and val["i"] then
-						local temp = {}
-						for c, v in pairs(val["i"]) do
-							local key = tonumber(strformat("%.1f", c))
-							if p[key] then
-								p[key] = p[key] + v
-							else
-								p[key] = v
+		if DPSMateSettings["mergepets"] then
+			for pName, pEntry in pairs(DPSMateUser) do
+				if pEntry[4] and pEntry[6] == uid[1] and pName ~= (cname or DetailsUser) and db[pEntry[1]] then
+					for cat, val in pairs(db[pEntry[1]]) do
+						if cat~="i" and val["i"] then
+							local temp = {}
+							for c, v in pairs(val["i"]) do
+								local key = tonumber(strformat("%.1f", c))
+								if p[key] then
+									p[key] = p[key] + v
+								else
+									p[key] = v
+								end
+								local i = 1
+								while true do
+									if not temp[i] then
+										tinsert(temp, i, {c,v})
+										break
+									elseif c<temp[i][1] then
+										tinsert(temp, i, {c,v})
+										break
+									end
+									i = i + 1
+								end
+								maxY = math.max(p[key], maxY)
+								maxX = math.max(c, maxX)
 							end
 							local i = 1
 							while true do
-								if not temp[i] then
-									tinsert(temp, i, {c,v})
+								if not b[i] then
+									tinsert(b, i, val[13])
+									tinsert(label, i, DPSMate:GetAbilityById(cat))
+									tinsert(Data1, i, temp)
 									break
-								elseif c<temp[i][1] then
-									tinsert(temp, i, {c,v})
+								elseif b[i]>=val[13] then
+									tinsert(b, i, val[13])
+									tinsert(label, i, DPSMate:GetAbilityById(cat))
+									tinsert(Data1, i, temp)
 									break
 								end
 								i = i + 1
 							end
-							maxY = math.max(p[key], maxY)
-							maxX = math.max(c, maxX)
-						end
-						local i = 1
-						while true do
-							if not b[i] then
-								tinsert(b, i, val[13])
-								tinsert(label, i, DPSMate:GetAbilityById(cat))
-								tinsert(Data1, i, temp)
-								break
-							elseif b[i]>=val[13] then
-								tinsert(b, i, val[13])
-								tinsert(label, i, DPSMate:GetAbilityById(cat))
-								tinsert(Data1, i, temp)
-								break
-							end
-							i = i + 1
 						end
 					end
 				end
@@ -958,22 +983,24 @@ function DPSMate.Modules.DetailsDamage:SortLineTable(t, b, cname)
 			end
 		end
 		-- Pet
-		if uid[5] and DPSMateUser[uid[5]] and uid[5] ~= (cname or DetailsUser) then
-			if t[DPSMateUser[uid[5]][1]] then
-				for cat, val in t[b][DPSMateUser[uid[5]][1]] do
-					if cat~="i" and val["i"] then
-						for ca, va in val["i"] do
-							local i=1
-							while true do
-								if (not newArr[i]) then
-									tinsert(newArr, i, {ca, va})
-									break
+		if DPSMateSettings["mergepets"] then
+			for pName, pEntry in pairs(DPSMateUser) do
+				if pEntry[4] and pEntry[6] == uid[1] and pName ~= (cname or DetailsUser) and t[b] and t[b][pEntry[1]] then
+					for cat, val in t[b][pEntry[1]] do
+						if cat~="i" and val["i"] then
+							for ca, va in val["i"] do
+								local i=1
+								while true do
+									if (not newArr[i]) then
+										tinsert(newArr, i, {ca, va})
+										break
+									end
+									if ca<=newArr[i][1] then
+										tinsert(newArr, i, {ca, va})
+										break
+									end
+									i=i+1
 								end
-								if ca<=newArr[i][1] then
-									tinsert(newArr, i, {ca, va})
-									break
-								end
-								i=i+1
 							end
 						end
 					end
@@ -1000,22 +1027,24 @@ function DPSMate.Modules.DetailsDamage:SortLineTable(t, b, cname)
 			end
 		end
 		-- Pet
-		if uid[5] and DPSMateUser[uid[5]] and uid[5] ~= (cname or DetailsUser) then
-			if t[DPSMateUser[uid[5]][1]] then
-				for cat, val in t[DPSMateUser[uid[5]][1]] do
-					if cat~="i" and val["i"] then
-						for ca, va in val["i"] do
-							local i=1
-							while true do
-								if (not newArr[i]) then
-									tinsert(newArr, i, {ca, va})
-									break
+		if DPSMateSettings["mergepets"] then
+			for pName, pEntry in pairs(DPSMateUser) do
+				if pEntry[4] and pEntry[6] == uid[1] and pName ~= (cname or DetailsUser) and t[pEntry[1]] then
+					for cat, val in t[pEntry[1]] do
+						if cat~="i" and val["i"] then
+							for ca, va in val["i"] do
+								local i=1
+								while true do
+									if (not newArr[i]) then
+										tinsert(newArr, i, {ca, va})
+										break
+									end
+									if ca<=newArr[i][1] then
+										tinsert(newArr, i, {ca, va})
+										break
+									end
+									i=i+1
 								end
-								if ca<=newArr[i][1] then
-									tinsert(newArr, i, {ca, va})
-									break
-								end
-								i=i+1
 							end
 						end
 					end

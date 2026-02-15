@@ -943,7 +943,7 @@ end
 function DPSMate.DB:BuildUser(Dname, Dclass)
 	if not Dname then Dname = "?!NIL Name?!" end
 	local _,_, pet,owner = strfind(Dname,"(.+)%s%((.+)%)")
-	if pet then 
+	if pet then
 		Dname = pet
 	end
 	if not DPSUser[Dname] then
@@ -953,7 +953,11 @@ function DPSMate.DB:BuildUser(Dname, Dclass)
 			[2] = Dclass,
 		}
 		DPSMate.UserId = nil
-		return self.userlen
+	end
+	if owner then
+		local ownerId = self:BuildUser(owner)
+		DPSUser[Dname][4] = true
+		DPSUser[Dname][6] = ownerId
 	end
 	return DPSUser[Dname][1]
 end

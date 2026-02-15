@@ -42,7 +42,14 @@ function DPSMate.Modules.DetailsInterrupts:EvalTable(cname)
 	local a, b, total, u, pet = {}, {}, 0, {}, false
 	local udata = DPSMateUser[cname or DetailsUser]
 	if not udata then return {}, {}, 0 end
-	if (udata[5] and udata[5] ~= DPSMate.L["unknown"] and arr[DPSMateUser[udata[5]] and DPSMateUser[udata[5]][1]]) and DPSMateSettings["mergepets"] then u={udata[1],DPSMateUser[udata[5]][1]} else u={udata[1]} end
+	u = {udata[1]}
+	if DPSMateSettings["mergepets"] then
+		for pName, pEntry in pairs(DPSMateUser) do
+			if pEntry[4] and pEntry[6] == udata[1] and pName ~= (cname or DetailsUser) and db[pEntry[1]] then
+				tinsert(u, pEntry[1])
+			end
+		end
+	end
 	for _, vvv in pairs(u) do
 		for cat, val in db[vvv] do -- 41 Ability
 			if cat~="i" then

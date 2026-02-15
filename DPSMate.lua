@@ -509,6 +509,21 @@ function DPSMate:GetUserById(id)
 	return self.UserId[id]
 end
 
+function DPSMate:GetPetsByOwner(arr)
+	local lookup = {}
+	for cat, _ in pairs(arr) do
+		local name = self:GetUserById(cat)
+		if name and DPSMateUser[name] and DPSMateUser[name][4] and DPSMateUser[name][6] then
+			local oid = DPSMateUser[name][6]
+			if not lookup[oid] then
+				lookup[oid] = {}
+			end
+			table.insert(lookup[oid], cat)
+		end
+	end
+	return lookup
+end
+
 function DPSMate:GetAbilityById(id)
 	if not self.AbilityId or not self.AbilityId[id] then
 		self.AbilityId = {}
