@@ -637,6 +637,9 @@ DPSMate.DB.VARIABLES_LOADED = function()
 		end
 
 		DPSMate:OnLoad()
+		-- Remove time-bucket ["i"] data left in Mode [1] from a previous session.
+		-- Fresh data accumulates during this session and is stripped again on logout.
+		DPSMate:StripInstantFromMode1()
 		DPSMate.Options:InitializeSegments()
 		DPSMate.Options:InitializeHideShowWindow()
 
@@ -647,7 +650,36 @@ DPSMate.DB.VARIABLES_LOADED = function()
 			DPSMate.Options:PopUpAccept(true, true)
 		end
 		
-		this.abilitylen = DPSMate:TableLength(DPSMateAbility)
+		-- Initialise abilitylen from the maximum ID stored in the registry, NOT the entry
+		-- count.  If any entries were ever deleted the count falls below the max, causing
+		-- BuildAbility to reuse an existing ID and corrupt the name→ID mapping.
+		do
+			local maxAId = 0
+			for _, aData in pairs(DPSMateAbility) do
+				if aData[1] and aData[1] > maxAId then maxAId = aData[1] end
+			end
+			this.abilitylen = maxAId
+		end
+		-- Repair: detect duplicate IDs in DPSMateAbility (caused by the bug above) and
+		-- reassign the later duplicate a fresh ID above the current maximum so that name
+		-- lookups work correctly going forward.
+		do
+			local seenIds = {}
+			for aName, aData in pairs(DPSMateAbility) do
+				local aid = aData[1]
+				if aid then
+					if seenIds[aid] then
+						-- Collision: give this entry a new unique ID.
+						this.abilitylen = this.abilitylen + 1
+						aData[1] = this.abilitylen
+					else
+						seenIds[aid] = aName
+					end
+				end
+			end
+		end
+		DPSMate.AbilityId = nil  -- invalidate reverse-lookup cache after any repairs
+
 		this.userlen = DPSMate:TableLength(DPSMateUser)
 		if this.userlen==0 then
 			this.userlen = 1

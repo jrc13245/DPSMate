@@ -499,6 +499,36 @@ function DPSMate:PruneStaleUsers()
 	end
 end
 
+-- Strip time-bucket ["i"] sub-tables from Mode [1] of damage/healing/threat metrics.
+-- These tables grow with combat duration (one entry per second) and accumulate across
+-- sessions, causing SavedVariables bloat. Called on login and on logout.
+--
+-- Metrics have varying nesting depths (2–4 levels) depending on the module.
+-- A simple recursive walk is used: wherever ["i"] is a table it is cleared to {}.
+-- Numbers stored under ["i"] (user/cause instant-totals) are left untouched.
+-- Using {} rather than nil keeps combat event writers (path["i"][time] = ...) safe.
+local function stripInstantRecursive(t)
+	for k, v in pairs(t) do
+		if k == "i" and type(v) == "table" then
+			t[k] = {}
+		elseif k ~= "i" and type(v) == "table" then
+			stripInstantRecursive(v)
+		end
+	end
+end
+
+function DPSMate:StripInstantFromMode1()
+	local metrics = {DPSMateDamageDone, DPSMateDamageTaken, DPSMateEDD, DPSMateEDT,
+	                 DPSMateTHealing, DPSMateEHealing, DPSMateOverhealing, DPSMateHealingTaken,
+	                 DPSMateEHealingTaken, DPSMateOverhealingTaken, DPSMateThreat}
+	for _, metric in pairs(metrics) do
+		if metric and metric[1] then
+			stripInstantRecursive(metric[1])
+		end
+	end
+end
+
+
 function DPSMate:GetUserById(id)
 	if not self.UserId or not self.UserId[id] then
 		self.UserId = {}

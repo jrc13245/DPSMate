@@ -566,9 +566,12 @@ function DPSMate.Options:Logout()
 	--self:SumGraphData()
 	DPSMate.Options.OldLogout()
 end
-Logout = function() 
+Logout = function()
+	-- Strip time-bucket ["i"] tables from Mode [1] and prune stale abilities before
+	-- SavedVariables are written to disk, to keep the file size manageable.
+	DPSMate:StripInstantFromMode1()
 	if DPSMateSettings["dataresetslogout"] == 3 then
-		DPSMate_Logout:Show() 
+		DPSMate_Logout:Show()
 	elseif DPSMateSettings["dataresetslogout"] == 2 then
 		--DPSMate.Options:SumGraphData()
 		DPSMate.Options.OldLogout()

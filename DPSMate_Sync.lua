@@ -1135,7 +1135,7 @@ end
 function DPSMate.Sync:EDAllOut(arr, prefix)
 	for cat, val in pairs(arr[1]) do
 		if val[pid] then
-			Buffer[cou] = {"DPSMate_ED"..prefix.."All", DPSMate:GetUserById(cat)..","..val[pid]["i"]..","}
+			Buffer[cou] = {"DPSMate_ED"..prefix.."All", DPSMate:GetUserById(cat)..","..(val[pid]["i"] or 0)..","}
 			cou = cou + 1
 		end
 	end
@@ -1180,7 +1180,7 @@ function DPSMate.Sync:EDAbilityOut(arr, prefix)
 		npc = DPSMate:GetUserById(cat)
 		if val[pid] then
 			for ca, va in pairs(val[pid]) do
-				if ca~="i" then
+				if ca~="i" and type(va) == "table" and DPSMate:GetAbilityById(ca) then
 					Buffer[cou] = {"DPSMate_ED"..prefix.."Ability", npc..","..DPSMate:GetAbilityById(ca)..","..va[1]..","..va[2]..","..va[3]..","..ceil(va[4])..","..va[5]..","..va[6]..","..va[7]..","..ceil(va[8])..","..va[9]..","..va[10]..","..va[11]..","..va[12]..","..va[13]..","..va[14]..","..va[15]..","..va[16]..","..ceil(va[17])..","..va[18]..","..va[19]..","..va[20]..","..ceil(va[21])..","..va[22]..","}
 					cou = cou + 1
 				end
@@ -1282,8 +1282,10 @@ function DPSMate.Sync:HealingTakenAbilityOut(arr, prefix)
 	for cat, val in pairs(arr[1][pid]) do
 		if cat~="i" then
 			for ca, va in pairs(val) do
-				Buffer[cou] = {"DPSMate_"..prefix.."HealingTakenAbility", DPSMate:GetUserById(cat)..","..DPSMate:GetAbilityById(ca)..","..va[1]..","..va[2]..","..va[3]..","..ceil(va[4])..","..ceil(va[5])..","..va[6]..","..va[7]..","..va[8]..","..va[9]..","}
-				cou = cou + 1
+				if ca ~= "i" and type(va) == "table" then
+					Buffer[cou] = {"DPSMate_"..prefix.."HealingTakenAbility", DPSMate:GetUserById(cat)..","..DPSMate:GetAbilityById(ca)..","..va[1]..","..va[2]..","..va[3]..","..ceil(va[4])..","..ceil(va[5])..","..va[6]..","..va[7]..","..va[8]..","..va[9]..","}
+					cou = cou + 1
+				end
 			end
 		end
 	end
