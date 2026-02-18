@@ -883,15 +883,20 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 					if target=="you" then target=Player end
 					
 					local prefixAmount, prefixCase, k = GetPrefix(msg, k)
-					if prefixCase and prefixCase == "absorbed" then
-						DB:SetUnregisterVariables(prefixAmount, ability, source)
+					local block = 0
+					if prefixCase then
+						if prefixCase == "absorbed" then
+							DB:SetUnregisterVariables(prefixAmount, ability, source)
+						elseif prefixCase == "blocked" then
+							block = 1; hit=0; crit=0
+						end
 					end
-					
+
 					if Kicks[ability] then DB:AssignPotentialKick(source, ability, target, GetTime()) end
 					if DmgProcs[ability] then DB:BuildBuffs(source, source, ability, true) end
 					if self.IgnoredDmgSpells[ability] then return end
-					DB:EnemyDamage(true, nil, source, ability, hit, crit, 0, 0, 0, 0, amount, target, 0, 0)
-					DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, 0)
+					DB:EnemyDamage(true, nil, source, ability, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
+					DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
 					
 					if self.TargetParty[target] then -- Fixes the issue for pvp death logging
 						if self.TargetParty[source] then

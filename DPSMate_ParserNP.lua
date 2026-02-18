@@ -356,6 +356,7 @@ local function HandleAutoAttack(attackerGuid, targetGuid, totalDamage, hitInfo, 
 		block = 1
 		hit = 0
 		crit = 0
+		glance = 0
 	end
 
 	if attackerFriendly then
