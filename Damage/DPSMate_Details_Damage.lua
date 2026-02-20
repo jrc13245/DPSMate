@@ -278,7 +278,7 @@ function DPSMate.Modules.DetailsDamage:ScrollFrame_Update(comp)
 	for line=1,10 do
 		lineplusoffset = line + (FauxScrollFrame_GetOffset(obj) or 0)
 		if uArr[lineplusoffset] ~= nil then
-			if dArr[lineplusoffset][2] then pet="(Pet)" else pet="" end
+			if dArr[lineplusoffset][2] then pet="("..dArr[lineplusoffset][2]..")" else pet="" end
 			local ability = DPSMate:GetAbilityById(uArr[lineplusoffset])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(ability..pet)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(dArr[lineplusoffset][1].." ("..strformat("%.2f", (dArr[lineplusoffset][1]*100/dTot)).."%)")

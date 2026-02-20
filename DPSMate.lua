@@ -673,10 +673,18 @@ function DPSMate:SetStatusBarValue()
 				r,g,b,img = self:GetClassColor(user[i])
 				statusbar:SetStatusBarColor(r,g,b, 1)
 
+				local displayName = user[i]
+				if not DPSMateSettings["mergepets"] and DPSMateUser[user[i]] and DPSMateUser[user[i]][4] then
+					local ownerID = DPSMateUser[user[i]][6]
+					if ownerID then
+						local ownerName = self:GetUserById(ownerID)
+						if ownerName then displayName = user[i].." ("..ownerName..")" end
+					end
+				end
 				if c["ranks"] then 
-					FPC[4+i][2]:SetText(i..". "..user[i])
+					FPC[4+i][2]:SetText(i..". "..displayName)
 				else
-					FPC[4+i][2]:SetText(user[i])
+					FPC[4+i][2]:SetText(displayName)
 				end
 				FPC[4+i][3]:SetText(val[i])
 				FPC[4+i][4]:SetTexture("Interface\\AddOns\\DPSMate\\images\\class\\"..img)

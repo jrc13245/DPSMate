@@ -487,7 +487,7 @@ function DPSMate.Modules.DetailsDamageTotal:ShowTooltip(user, obj)
 	if not a or not b or not c then return end
 	for i=1, DPSMateSettings["subviewrows"] do
 		if not a[i] then break end
-		if c[i][2] then pet="(Pet)" else pet="" end
+		if c[i][2] then pet="("..c[i][2]..")" else pet="" end
 		GameTooltip:AddDoubleLine(i..". "..DPSMate:GetAbilityById(a[i])..pet,c[i][1].." ("..strformat("%.2f", 100*c[i][1]/b).."%)",1,1,1,1,1,1)
 	end
 	GameTooltip:Show()

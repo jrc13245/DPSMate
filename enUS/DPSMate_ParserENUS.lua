@@ -486,8 +486,12 @@ function DPSMate.Parser:SelfHits(msg)
 		end
 		
 		DB:EnemyDamage(true, nil, Player, AAttack, hit, crit, 0, 0, 0, 0, amount, target, block, 0) -- glance?
-		DB:DamageDone(Player, AAttack, hit, crit, 0, 0, 0, 0, amount, glance, block)
-		if self.TargetParty[target] then DB:BuildFail(1, target, Player, AAttack, amount);DB:DeathHistory(target, Player, AAttack, amount, hit, crit, 0, 0) end
+		if self.TargetParty[target] then
+			DB:BuildFail(1, target, Player, AAttack, amount)
+			DB:DeathHistory(target, Player, AAttack, amount, hit, crit, 0, 0)
+		else
+			DB:DamageDone(Player, AAttack, hit, crit, 0, 0, 0, 0, amount, glance, block)
+		end
 		return
 	elseif choice == 3 then
 		i, j = strfind(msg, " health.", k, true)
@@ -609,8 +613,12 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 		if DmgProcs[ability] then DB:BuildBuffs(Player, Player, ability, true) end
 		if self.IgnoredDmgSpells[ability] then return end
 		DB:EnemyDamage(true, nil, Player, ability, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
-		DB:DamageDone(Player, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
-		if self.TargetParty[target] then DB:BuildFail(1, target, Player, ability, amount);DB:DeathHistory(target, Player, ability, amount, hit, crit, 0, 0) end
+		if self.TargetParty[target] then
+			DB:BuildFail(1, target, Player, ability, amount)
+			DB:DeathHistory(target, Player, ability, amount, hit, crit, 0, 0)
+		else
+			DB:DamageDone(Player, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
+		end
 		return
 	elseif choice == 3 then
 		i,j = strfind(msg, " by ", k, true);
@@ -859,13 +867,13 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 						end
 
 						DB:EnemyDamage(true, nil, source, ability, 1, 0, 0, 0, 0, 0, amount, target, 0, 0)
-						DB:DamageDone(source, ability, 1, 0, 0, 0, 0, 0, amount, 0, 0)
-
 						if self.TargetParty[target] then
 							if self.TargetParty[source] then
 								DB:BuildFail(1, target, source, ability, amount)
 							end
 							DB:DeathHistory(target, source, ability, amount, 1, 0, 0, 0)
+						else
+							DB:DamageDone(source, ability, 1, 0, 0, 0, 0, 0, amount, 0, 0)
 						end
 					end
 					return
@@ -900,13 +908,13 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 					if DmgProcs[ability] then DB:BuildBuffs(source, source, ability, true) end
 					if self.IgnoredDmgSpells[ability] then return end
 					DB:EnemyDamage(true, nil, source, ability, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
-					DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
-					
 					if self.TargetParty[target] then -- Fixes the issue for pvp death logging
 						if self.TargetParty[source] then
 							DB:BuildFail(1, target, source, ability, amount);
 						end
 						DB:DeathHistory(target, source, ability, amount, hit, crit, 0, 0) 
+					else
+						DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
 					end
 					DB:AddSpellSchool(ability,school)
 					
