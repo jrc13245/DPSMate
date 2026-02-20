@@ -1291,10 +1291,6 @@ function DPSMate.DB:DamageDone(Duser, Dname, Dhit, Dcrit, Dmiss, Dparry, Ddodge,
 				path[4] = path[4] + Damount
 				path[1] = path[1] + 1
 			elseif Dcrit == 1 and Dblock ~= 1 then
-				if (Damount < path[2] or path[2] == 0) then path[2] = Damount end
-				if Damount > path[3] then path[3] = Damount end
-				path[4] = path[4] + Damount
-				path[1] = path[1] + 1
 				if (Damount < path[6] or path[6] == 0) then path[6] = Damount end
 				if Damount > path[7] then path[7] = Damount end
 				path[8] = path[8] + Damount
@@ -1379,10 +1375,6 @@ function DPSMate.DB:DamageTaken(Duser, Dname, Dhit, Dcrit, Dmiss, Dparry, Ddodge
 				path[4] = path[4]+Damount
 				path[1] = path[1] + 1
 			elseif Dcrit == 1 and Dblock ~= 1 then
-				if (Damount < path[2] or path[2] == 0) then path[2] = Damount end
-				if Damount > path[3] then path[3] = Damount end
-				path[4] = path[4]+Damount
-				path[1] = path[1] + 1
 				if (Damount < path[6] or path[6] == 0) then path[6] = Damount end
 				if Damount > path[7] then path[7] = Damount end
 				path[8] = path[8]+Damount

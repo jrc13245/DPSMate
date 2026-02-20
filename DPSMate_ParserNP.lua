@@ -187,11 +187,15 @@ end
 --------------            HitInfo / VictimState Constants         --------------
 ----------------------------------------------------------------------------------
 
--- HitInfo bitmask flags
+-- HitInfo bitmask flags (for AUTO_ATTACK events, from SMSG_ATTACKERSTATEUPDATE)
 local HITINFO_MISS        = 16
 local HITINFO_CRITICALHIT = 128
 local HITINFO_GLANCING    = 16384
 local HITINFO_CRUSHING    = 32768
+
+-- Spell hit type flags (for SPELL_DAMAGE_EVENT, from SPELL_HIT_TYPE enum)
+-- hitInfo = 2 for crits, 0 for normal hits
+local SPELL_HIT_TYPE_CRIT = 2
 
 -- VictimState values (not bitmask, plain enum)
 local VICTIMSTATE_NORMAL    = 1
@@ -459,8 +463,10 @@ local function HandleSpellDamage(targetGuid, casterGuid, spellId, amount, mitiga
 	end
 
 	-- Determine hit/crit
+	-- SPELL_DAMAGE_EVENT uses SPELL_HIT_TYPE enum (bit 1 = 2 means crit)
+	-- not the same bitmask as AUTO_ATTACK's hitInfo (where HITINFO_CRITICALHIT = 128)
 	local hit, crit = 0, 0
-	if HasFlag(hitInfo, HITINFO_CRITICALHIT) then
+	if HasFlag(hitInfo, SPELL_HIT_TYPE_CRIT) then
 		crit = 1
 	else
 		hit = 1
@@ -518,7 +524,7 @@ end
 --------------            SPELL_MISS Handlers                     --------------
 ----------------------------------------------------------------------------------
 
-local function HandleSpellMissSelf(spellId, targetGuid, missInfo)
+local function HandleSpellMissSelf(targetGuid, spellId, missInfo)
 	local casterName = Player
 	local targetName = ResolveName(targetGuid)
 	if not targetName then return end
@@ -544,7 +550,7 @@ local function HandleSpellMissSelf(spellId, targetGuid, missInfo)
 	DB:EnemyDamage(true, nil, casterName, ability, 0, 0, miss, parry, dodge, resist, 0, targetName, block, 0)
 end
 
-local function HandleSpellMissOther(spellId, casterGuid, targetGuid, missInfo)
+local function HandleSpellMissOther(casterGuid, targetGuid, spellId, missInfo)
 	local casterName = ResolveName(casterGuid)
 	local targetName = ResolveName(targetGuid)
 	if not casterName or not targetName then return end
@@ -593,7 +599,8 @@ local function HandleSpellMissOther(spellId, casterGuid, targetGuid, missInfo)
 end
 
 NPParser.SPELL_MISS_SELF = function()
-	HandleSpellMissSelf(arg1, arg2, arg3)
+	-- arg1=casterGuid (always self, skip), arg2=targetGuid, arg3=spellId, arg4=missInfo
+	HandleSpellMissSelf(arg2, arg3, arg4)
 end
 
 NPParser.SPELL_MISS_OTHER = function()
