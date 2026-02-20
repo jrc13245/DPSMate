@@ -204,7 +204,7 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 		-- Getting edt values
 		for cat, val in pairs(db) do
 			if val[ownerId] then
-				if val[ownerId]["i"]>0 then
+				if val[ownerId]["i"] and val[ownerId]["i"]>0 then
 					i = 1
 					while true do
 						if (not edtaken[i]) then
