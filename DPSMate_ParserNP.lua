@@ -2,12 +2,22 @@
 -- Nampower/SuperWoW structured event handlers for DPSMate
 -- Replaces string-based CHAT_MSG_* parsing when Nampower+SuperWoW are available
 -- Falls back to existing parser when not available
+--
+-- Nampower version history:
+--   v2.24+  AUTO_ATTACK_SELF/OTHER (NP_EnableAutoAttackEvents CVar)
+--   v2.30+  SPELL_HEAL_BY_SELF/OTHER (NP_EnableSpellHealEvents CVar)
+--   v2.31+  SPELL_DAMAGE_EVENT_SELF/OTHER, SPELL_MISS_SELF/OTHER
+--   v2.40+  Packed GUID parsing fix: targetGuid in all events now returns the
+--           correct hex string for friendly player targets (previously was
+--           "0x0000000000000000" for some players). Benefits AUTO_ATTACK,
+--           SPELL_DAMAGE_EVENT, and SPELL_MISS events automatically — no code
+--           change required; ResolveName() will now succeed where it previously
+--           returned nil and dropped the event.
 
 local DB = DPSMate.DB
 local AAttack = "AutoAttack"
 local floor = math.floor
 local mod = math.mod
-local GetTime = GetTime
 
 ----------------------------------------------------------------------------------
 --------------            Feature Detection                       --------------
@@ -204,8 +214,9 @@ local VICTIMSTATE_PARRY     = 3
 local VICTIMSTATE_BLOCKS    = 5
 local VICTIMSTATE_EVADES    = 6
 local VICTIMSTATE_IS_IMMUNE = 7
+local VICTIMSTATE_DEFLECTS  = 8  -- attack was deflected; treat as miss
 
--- MissInfo values (not bitmask, plain enum)
+-- MissInfo values (not bitmask, plain enum) — SpellMissInfo server enum
 local MISSINFO_MISS    = 1
 local MISSINFO_RESIST  = 2
 local MISSINFO_DODGE   = 3
@@ -213,7 +224,10 @@ local MISSINFO_PARRY   = 4
 local MISSINFO_BLOCK   = 5
 local MISSINFO_EVADE   = 6
 local MISSINFO_IMMUNE  = 7
+local MISSINFO_IMMUNE2 = 8  -- immune variant (same treatment as IMMUNE)
+local MISSINFO_DEFLECT = 9  -- projectile deflected; count as miss
 local MISSINFO_ABSORB  = 10
+local MISSINFO_REFLECT = 11 -- spell reflected back to caster; count as miss
 
 ----------------------------------------------------------------------------------
 --------------            Parser Frame & Events                   --------------
@@ -319,7 +333,8 @@ local function HandleAutoAttack(attackerGuid, targetGuid, totalDamage, hitInfo, 
 	end
 
 	local attackerFriendly = IsFriendly(ownerName or attackerName)
-	local targetFriendly = IsFriendly(targetName)
+	local targetOwnerName = ResolveOwner(targetGuid)
+	local targetFriendly = IsFriendly(targetName) or IsFriendly(targetOwnerName)
 
 	-- Determine hit type from hitInfo bitmask
 	local hit, crit, glance, crush, block = 0, 0, 0, 0, 0
@@ -341,7 +356,10 @@ local function HandleAutoAttack(attackerGuid, targetGuid, totalDamage, hitInfo, 
 		block = 1
 		amount = 0
 	elseif victimState == VICTIMSTATE_EVADES or victimState == VICTIMSTATE_IS_IMMUNE then
-		return -- skip evade/immune
+		return -- skip evade/immune (no meaningful stat to record)
+	elseif victimState == VICTIMSTATE_DEFLECTS then
+		miss = 1
+		amount = 0
 	elseif amount > 0 then
 		-- Normal hit, check hit type
 		if HasFlag(hitInfo, HITINFO_CRITICALHIT) then
@@ -355,27 +373,27 @@ local function HandleAutoAttack(attackerGuid, targetGuid, totalDamage, hitInfo, 
 		end
 	end
 
-	-- Handle blocked amount as a "block hit" (amount reduced by block)
+	-- Partial block: record block=1 but keep hit type (damage still occurred)
 	if (blockedAmount or 0) > 0 and amount > 0 then
 		block = 1
-		hit = 0
-		crit = 0
-		glance = 0
 	end
+	local resist = (totalResist or 0) > 0 and 1 or 0
 
 	if attackerFriendly then
-		-- Friendly attacker -> DamageDone + EnemyDamage(true=EDT)
-		DB:DamageDone(attackerName, AAttack, hit, crit, miss, parry, dodge, 0, amount, glance, block)
-		DB:EnemyDamage(true, nil, attackerName, AAttack, hit, crit, miss, parry, dodge, 0, amount, targetName, block, crush)
-		if targetFriendly and amount > 0 then
+		if not targetFriendly then
+			-- Friendly attacker vs enemy target -> DamageDone + EDT
+			DB:DamageDone(attackerName, AAttack, hit, crit, miss, parry, dodge, resist, amount, glance, block)
+			DB:EnemyDamage(true, nil, attackerName, AAttack, hit, crit, miss, parry, dodge, resist, amount, targetName, block, crush)
+		elseif amount > 0 then
+			-- Friendly fire (e.g. AoE clipping own pet): log fail + death history only
 			DB:BuildFail(1, targetName, attackerName, AAttack, amount)
 			DB:DeathHistory(targetName, attackerName, AAttack, amount, hit, crit, 0, crush)
 		end
 	else
 		-- Hostile attacker -> DamageTaken + EnemyDamage(false/nil=EDD)
 		if targetFriendly then
-			DB:DamageTaken(targetName, AAttack, hit, crit, miss, parry, dodge, 0, amount, attackerName, crush, blockedAmount or 0)
-			DB:EnemyDamage(false, nil, targetName, AAttack, hit, crit, miss, parry, dodge, 0, amount, attackerName, block, crush)
+			DB:DamageTaken(targetName, AAttack, hit, crit, miss, parry, dodge, resist, amount, attackerName, crush, blockedAmount or 0)
+			DB:EnemyDamage(false, nil, targetName, AAttack, hit, crit, miss, parry, dodge, resist, amount, attackerName, block, crush)
 			DB:DeathHistory(targetName, attackerName, AAttack, amount, hit, crit, 0, crush)
 		end
 	end
@@ -454,7 +472,10 @@ local function HandleSpellDamage(targetGuid, casterGuid, spellId, amount, mitiga
 	if ability == "Unknown" then return end
 
 	local casterFriendly = IsFriendly(ownerName or casterName)
-	local targetFriendly = IsFriendly(targetName)
+	-- Resolve target's owner so pet targets (e.g. warlock's own pet hit by AoE)
+	-- are correctly treated as friendly rather than as enemy damage targets
+	local targetOwnerName = ResolveOwner(targetGuid)
+	local targetFriendly = IsFriendly(targetName) or IsFriendly(targetOwnerName)
 
 	-- Determine if periodic
 	local periodic = IsPeriodic(effectAuraStr)
@@ -475,10 +496,13 @@ local function HandleSpellDamage(targetGuid, casterGuid, spellId, amount, mitiga
 	-- Parse mitigation
 	local absorb, blocked, resisted = ParseMitigation(mitigationStr)
 	local block = 0
+	local resist = 0
 	if blocked > 0 then
 		block = 1
-		hit = 0
-		crit = 0
+		-- hit/crit preserved: damage occurred, it was just partially blocked
+	end
+	if resisted > 0 then
+		resist = 1
 	end
 
 	-- Spell school
@@ -495,18 +519,20 @@ local function HandleSpellDamage(targetGuid, casterGuid, spellId, amount, mitiga
 	local damageAmount = amount or 0
 
 	if casterFriendly then
-		-- Friendly caster -> DamageDone + EDT
-		DB:DamageDone(casterName, ability, hit, crit, 0, 0, 0, 0, damageAmount, 0, block)
-		DB:EnemyDamage(true, nil, casterName, ability, hit, crit, 0, 0, 0, 0, damageAmount, targetName, block, 0)
-		if targetFriendly and damageAmount > 0 then
+		if not targetFriendly then
+			-- Friendly caster vs enemy target -> DamageDone + EDT
+			DB:DamageDone(casterName, ability, hit, crit, 0, 0, 0, resist, damageAmount, 0, block)
+			DB:EnemyDamage(true, nil, casterName, ability, hit, crit, 0, 0, 0, resist, damageAmount, targetName, block, 0)
+		elseif damageAmount > 0 then
+			-- Friendly fire (e.g. Hellfire hitting own pet): log fail + death history only
 			DB:BuildFail(1, targetName, casterName, ability, damageAmount)
 			DB:DeathHistory(targetName, casterName, ability, damageAmount, hit, crit, 0, 0)
 		end
 	else
 		-- Hostile caster -> DamageTaken + EDD
 		if targetFriendly then
-			DB:DamageTaken(targetName, ability, hit, crit, 0, 0, 0, 0, damageAmount, casterName, 0, block)
-			DB:EnemyDamage(false, nil, targetName, ability, hit, crit, 0, 0, 0, 0, damageAmount, casterName, block, 0)
+			DB:DamageTaken(targetName, ability, hit, crit, 0, 0, 0, resist, damageAmount, casterName, 0, block)
+			DB:EnemyDamage(false, nil, targetName, ability, hit, crit, 0, 0, 0, resist, damageAmount, casterName, block, 0)
 			DB:DeathHistory(targetName, casterName, ability, damageAmount, hit, crit, 0, 0)
 		end
 	end
@@ -532,16 +558,19 @@ local function HandleSpellMissSelf(targetGuid, spellId, missInfo)
 	local ability = GetSpellName(spellId)
 	if ability == "Unknown" then return end
 
+	if not missInfo or missInfo == 0 then return end
 	local miss, resist, dodge, parry, block = 0, 0, 0, 0, 0
 	if missInfo == MISSINFO_MISS then miss = 1
 	elseif missInfo == MISSINFO_RESIST then resist = 1
 	elseif missInfo == MISSINFO_DODGE then dodge = 1
 	elseif missInfo == MISSINFO_PARRY then parry = 1
 	elseif missInfo == MISSINFO_BLOCK then block = 1
+	elseif missInfo == MISSINFO_DEFLECT then miss = 1  -- deflected projectile
+	elseif missInfo == MISSINFO_REFLECT then miss = 1  -- spell reflected back to caster
 	elseif missInfo == MISSINFO_ABSORB then
 		DB:Absorb(ability, targetName, casterName)
 		return
-	elseif missInfo == MISSINFO_IMMUNE or missInfo == MISSINFO_EVADE then
+	elseif missInfo == MISSINFO_IMMUNE or missInfo == MISSINFO_IMMUNE2 or missInfo == MISSINFO_EVADE then
 		return
 	end
 
@@ -570,20 +599,21 @@ local function HandleSpellMissOther(casterGuid, targetGuid, spellId, missInfo)
 	local casterFriendly = IsFriendly(ownerName or casterName)
 	local targetFriendly = IsFriendly(targetName)
 
+	if not missInfo or missInfo == 0 then return end
 	local miss, resist, dodge, parry, block = 0, 0, 0, 0, 0
 	if missInfo == MISSINFO_MISS then miss = 1
 	elseif missInfo == MISSINFO_RESIST then resist = 1
 	elseif missInfo == MISSINFO_DODGE then dodge = 1
 	elseif missInfo == MISSINFO_PARRY then parry = 1
 	elseif missInfo == MISSINFO_BLOCK then block = 1
+	elseif missInfo == MISSINFO_DEFLECT then miss = 1  -- deflected projectile
+	elseif missInfo == MISSINFO_REFLECT then miss = 1  -- spell reflected back to caster
 	elseif missInfo == MISSINFO_ABSORB then
-		if casterFriendly then
-			DB:Absorb(ability, targetName, casterName)
-		elseif targetFriendly then
+		if casterFriendly or targetFriendly then
 			DB:Absorb(ability, targetName, casterName)
 		end
 		return
-	elseif missInfo == MISSINFO_IMMUNE or missInfo == MISSINFO_EVADE then
+	elseif missInfo == MISSINFO_IMMUNE or missInfo == MISSINFO_IMMUNE2 or missInfo == MISSINFO_EVADE then
 		return
 	end
 
@@ -605,6 +635,118 @@ end
 
 NPParser.SPELL_MISS_OTHER = function()
 	HandleSpellMissOther(arg1, arg2, arg3, arg4)
+end
+
+----------------------------------------------------------------------------------
+--------------            SPELL_HEAL Handlers                     --------------
+----------------------------------------------------------------------------------
+
+-- Dedup state: prevent double-counting when both NP and string parser fire
+-- for the same heal event. NP handler records a count; the wrapped DB functions
+-- consume it and skip when non-zero.
+local origDBHealing = nil
+local origDBHealingTaken = nil
+local origDBDeathHistory = nil
+local npHealDedup = {}
+
+local function RecordNPHeal(key)
+	npHealDedup[key] = (npHealDedup[key] or 0) + 1
+end
+
+local function ConsumeNPHeal(key)
+	local count = npHealDedup[key]
+	if not count or count <= 0 then return false end
+	if count == 1 then npHealDedup[key] = nil
+	else npHealDedup[key] = count - 1 end
+	return true
+end
+
+-- Wrap DB healing functions so the string parser skips entries NP already recorded.
+-- Only intercepts mode=1 for Healing and mode=0 for HealingTaken (raw totals);
+-- mode=0 effective Healing and mode=1 effective HealingTaken still pass through
+-- to the string parser (which has the correct overheal-adjusted amounts).
+local function WrapDBHealingForNP()
+	origDBHealing = DPSMate.DB.Healing
+	DPSMate.DB.Healing = function(self, mode, arr, caster, name, hit, crit, amount)
+		if mode == 1 then
+			local key = (caster or "") .. "|H1|" .. (name or "") .. "|" .. (amount or 0)
+			if ConsumeNPHeal(key) then return end
+		end
+		return origDBHealing(self, mode, arr, caster, name, hit, crit, amount)
+	end
+	origDBHealingTaken = DPSMate.DB.HealingTaken
+	DPSMate.DB.HealingTaken = function(self, mode, arr, healed, name, hit, crit, amount, healer)
+		if mode == 0 then
+			local key = (healed or "") .. "|HT0|" .. (name or "") .. "|" .. (amount or 0)
+			if ConsumeNPHeal(key) then return end
+		end
+		return origDBHealingTaken(self, mode, arr, healed, name, hit, crit, amount, healer)
+	end
+	origDBDeathHistory = DPSMate.DB.DeathHistory
+	DPSMate.DB.DeathHistory = function(self, target, cause, ability, amount, hit, crit, type, crush)
+		local key = (target or "") .. "|DH|" .. (cause or "") .. "|" .. (ability or "") .. "|" .. (amount or 0)
+		if ConsumeNPHeal(key) then return end
+		return origDBDeathHistory(self, target, cause, ability, amount, hit, crit, type, crush)
+	end
+end
+
+local function HandleSpellHeal(targetGuid, casterGuid, spellId, amount, critical, periodic)
+	if not targetGuid or targetGuid == "0x0000000000000000" then return end
+	local casterName = ResolveName(casterGuid)
+	local targetName = ResolveName(targetGuid)
+	if not casterName or not targetName then return end
+
+	local ownerName = ResolveOwner(casterGuid)
+	if ownerName then
+		DB:BuildUser(casterName)
+		DB:BuildUser(ownerName)
+		DPSMateUser[casterName][4] = true
+		DPSMateUser[casterName][6] = DPSMateUser[ownerName][1]
+		DPSMateUser[ownerName][5] = casterName
+	end
+
+	local ability = GetSpellName(spellId)
+	if ability == "Unknown" then return end
+	if periodic == 1 then ability = ability .. "(Periodic)" end
+
+	-- Dhit=1 means regular hit, Dhit=0 means crit (DPSMate internal convention)
+	local hit = (critical == 1) and 0 or 1
+	local crit = (critical == 1) and 1 or 0
+	local effectiveCaster = ownerName or casterName
+
+	-- Record dedup counts before calling DB so string parser skips duplicates
+	local hKey  = effectiveCaster .. "|H1|"  .. ability .. "|" .. amount
+	local htKey = targetName      .. "|HT0|" .. ability .. "|" .. amount
+	local dhKey = targetName .. "|DH|" .. effectiveCaster .. "|" .. ability .. "|" .. amount
+	RecordNPHeal(hKey)
+	RecordNPHeal(htKey)
+	RecordNPHeal(dhKey)
+
+	-- Call originals directly (bypassing wrappers) — NP is the authoritative source
+	origDBHealing(DB, 1, nil, effectiveCaster, ability, hit, crit, amount)
+	origDBHealingTaken(DB, 0, nil, targetName, ability, hit, crit, amount, effectiveCaster)
+	origDBDeathHistory(DB, targetName, effectiveCaster, ability, amount, hit, crit, 1, 0)
+end
+
+NPParser.SPELL_HEAL_BY_SELF = function()
+	HandleSpellHeal(arg1, arg2, arg3, arg4, arg5, arg6)
+end
+
+NPParser.SPELL_HEAL_BY_OTHER = function()
+	HandleSpellHeal(arg1, arg2, arg3, arg4, arg5, arg6)
+end
+
+----------------------------------------------------------------------------------
+--------------            UNIT_DIED Handler                       --------------
+----------------------------------------------------------------------------------
+
+NPParser.UNIT_DIED = function()
+	-- arg1 = GUID of the unit that died
+	local name = ResolveName(arg1)
+	if not name then return end
+	-- Confirm the death in DPSMate's death history: sets the "confirmed" flag,
+	-- opens a new death slot for this player, and broadcasts to party.
+	DB:UnregisterDeath(name)
 end
 
 ----------------------------------------------------------------------------------
@@ -683,16 +825,20 @@ NPParser:SetScript("OnEvent", function()
 		if hasNampower then
 			-- Nampower + SuperWoW: structured events with owner resolution
 
-			-- Enable CVar-gated events
-			if NPVersionAtLeast(2, 24, 0) then
-				SetCVar("NP_EnableAutoAttackEvents", "1")
-			end
-
 			-- v2.24+: Auto attack events
 			if NPVersionAtLeast(2, 24, 0) then
+				SetCVar("NP_EnableAutoAttackEvents", "1")
 				NPParser:RegisterEvent("AUTO_ATTACK_SELF")
 				NPParser:RegisterEvent("AUTO_ATTACK_OTHER")
 				UnregisterStringParserEvents(autoAttackEvents)
+			end
+
+			-- v2.30+: Spell heal events (CVar-gated, not auto-enabled)
+			if NPVersionAtLeast(2, 30, 0) then
+				SetCVar("NP_EnableSpellHealEvents", "1")
+				WrapDBHealingForNP()
+				NPParser:RegisterEvent("SPELL_HEAL_BY_SELF")
+				NPParser:RegisterEvent("SPELL_HEAL_BY_OTHER")
 			end
 
 			-- v2.31+: Spell damage + spell miss events
@@ -703,6 +849,9 @@ NPParser:SetScript("OnEvent", function()
 				NPParser:RegisterEvent("SPELL_MISS_OTHER")
 				UnregisterStringParserEvents(spellDamageEvents)
 			end
+
+			-- UNIT_DIED: available in all Nampower versions
+			NPParser:RegisterEvent("UNIT_DIED")
 		else
 			-- SuperWoW only: RAW_COMBATLOG for pet event owner resolution
 			UnregisterStringParserEvents(petStringEvents)
