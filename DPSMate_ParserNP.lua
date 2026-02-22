@@ -705,6 +705,12 @@ local function HandleSpellHeal(targetGuid, casterGuid, spellId, amount, critical
 		DPSMateUser[ownerName][5] = casterName
 	end
 
+	-- Only track heals where at least one side is friendly (prevents enemy-heals-enemy)
+	local casterFriendly = IsFriendly(ownerName or casterName)
+	local targetOwnerName = ResolveOwner(targetGuid)
+	local targetFriendly = IsFriendly(targetName) or IsFriendly(targetOwnerName)
+	if not casterFriendly and not targetFriendly then return end
+
 	local ability = GetSpellName(spellId)
 	if ability == "Unknown" then return end
 	if periodic == 1 then ability = ability .. "(Periodic)" end

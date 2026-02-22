@@ -169,8 +169,15 @@ DPSMate.Options.Options = {
 				desc = DPSMate.L["removesegmentdesc"],
 				args = {},
 			},
-			blank2 = {
+			purgeoldsegments = {
 				order = 31,
+				type = 'execute',
+				name = DPSMate.L["purgeoldsegments"],
+				desc = DPSMate.L["purgeoldsegmentsdesc"],
+				func = function() DPSMate.Options:PurgeOldSegments() end,
+			},
+			blank2 = {
+				order = 32,
 				type = 'header',
 			},
 			showAll  = {
@@ -483,6 +490,7 @@ function DPSMate.Options:InitializeConfigMenu()
 	DPSMate_ConfigMenu_Tab_GeneralOptions_Segments:SetValue(DPSMateSettings["datasegments"])
 	DPSMate_ConfigMenu_Tab_GeneralOptions_TargetScale:SetValue(DPSMateSettings["targetscale"])
 	DPSMate_ConfigMenu_Tab_GeneralOptions_UpdateInterval:SetValue(DPSMateSettings["mainupdatetime"] or 1.5)
+	DPSMate_ConfigMenu_Tab_GeneralOptions_AutoWipe:SetValue(DPSMateSettings["autowipesessions"] or 0)
 	
 	-- Tab Columns
 	for i=1, 4 do
@@ -802,6 +810,7 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 			DPSMateCCBreaker = {[1]={},[2]={}}
 			DPSMateHistory = {
 				names = {},
+				timestamps = {},
 				DMGDone = {},
 				DMGTaken = {},
 				EDDone = {},
@@ -830,7 +839,8 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 					[2] = {}
 				},
 			}
-			
+			DPSMateLastWipe = 0
+
 			DPSMate:UpdatePointer()
 			DPSMate.DB:UpdatePointer()
 
@@ -1708,25 +1718,30 @@ function DPSMate.Options:NewSegment(segname)
 end
 
 function DPSMate.Options:CreateSegment(name)
-	-- Need to add a new check
 	local modes = {["DMGDone"] = DPSMateDamageDone[2], ["DMGTaken"] = DPSMateDamageTaken[2], ["EDDone"] = DPSMateEDD[2], ["EDTaken"] = DPSMateEDT[2], ["THealing"] = DPSMateTHealing[2], ["EHealing"] = DPSMateEHealing[2], ["OHealing"] = DPSMateOverhealing[2], ["EHealingTaken"] = DPSMateEHealingTaken[2], ["THealingTaken"] = DPSMateHealingTaken[2], ["OHealingTaken"] = DPSMateOverhealingTaken[2], ["Absorbs"] = DPSMateAbsorbs[2], ["Deaths"] = DPSMateDeaths[2], ["Interrupts"] = DPSMateInterrupts[2], ["Dispels"] = DPSMateDispels[2], ["Auras"] = DPSMateAurasGained[2], ["Threat"] = DPSMateThreat[2], ["Fail"] = DPSMateFails[2], ["CCBreaker"] = DPSMateCCBreaker[2]}
-	
+	local maxSeg = DPSMateSettings["datasegments"]
+
 	tinsert(DPSMateHistory["names"], 1, name.." - "..GameTime_GT())
+	for i = DPSMate:TableLength(DPSMateHistory["names"]), maxSeg+1, -1 do
+		tremove(DPSMateHistory["names"], i)
+	end
+	tinsert(DPSMateHistory["timestamps"], 1, time and time() or nil)
+	for i = DPSMate:TableLength(DPSMateHistory["timestamps"]), maxSeg+1, -1 do
+		tremove(DPSMateHistory["timestamps"], i)
+	end
+
 	for cat, val in pairs(modes) do
 		tinsert(DPSMateHistory[cat], 1, DPSMate:CopyTableStripInstant(val))
-		if DPSMate:TableLength(DPSMateHistory[cat])>DPSMateSettings["datasegments"] then
-			for i=DPSMateSettings["datasegments"]+1, DPSMate:TableLength(DPSMateHistory[cat]) do
-				tremove(DPSMateHistory[cat], i)
-			end
-			tremove(DPSMateHistory[cat], DPSMateSettings["datasegments"]+1)
-		end
-		if DPSMate:TableLength(DPSMateCombatTime["segments"])>DPSMateSettings["datasegments"] then
-			for i=DPSMateSettings["datasegments"]+1, DPSMate:TableLength(DPSMateCombatTime["segments"]) do
-				tremove(DPSMateCombatTime["segments"], i)
-			end
+		for i = DPSMate:TableLength(DPSMateHistory[cat]), maxSeg+1, -1 do
+			tremove(DPSMateHistory[cat], i)
 		end
 	end
+
 	tinsert(DPSMateCombatTime["segments"], 1, {[1]=DPSMateCombatTime["current"], [2]=DPSMateCombatTime["effective"][2]})
+	for i = DPSMate:TableLength(DPSMateCombatTime["segments"]), maxSeg+1, -1 do
+		tremove(DPSMateCombatTime["segments"], i)
+	end
+
 	DPSMate.Options:InitializeSegments()
 end
 
@@ -1900,6 +1915,7 @@ function DPSMate.Options:RemoveWindow()
 		frame:Hide()
 		_G("DPSMate_ConfigMenu_Menu_Button"..(9+frame.Key)):Hide()
 		tremove(DPSMateSettings["windows"], frame.Key)
+		DPSMate:InvalidateFrameCache()
 		local TL = DPSMate:TableLength(DPSMateSettings["windows"])
 		_G("DPSMate_ConfigMenu_Menu_Button"..(9+TL)).after = DPSMate_ConfigMenu_Menu_Button2
 		DPSMate_ConfigMenu_Menu_Button2:ClearAllPoints()
@@ -1981,6 +1997,30 @@ function DPSMate.Options:RemoveSegment(i)
 	end
 	DPSMate.Options:InitializeSegments()
 	DPSMate.Options.Dewdrop:Close()
+end
+
+function DPSMate.Options:PurgeOldSegments()
+	if not time then
+		DPSMate:SendMessage(DPSMate.L["purgenotimestamp"])
+		DPSMate.Options.Dewdrop:Close()
+		return
+	end
+	local cutoff = time() - 86400  -- 24 hours in seconds
+	-- Iterate backward so tremove doesn't shift unvisited indices.
+	for i = DPSMate:TableLength(DPSMateHistory["timestamps"]), 1, -1 do
+		local ts = DPSMateHistory["timestamps"][i]
+		if ts and ts < cutoff then
+			for cat, val in DPSMateHistory do
+				tremove(DPSMateHistory[cat], i)
+			end
+			if DPSMateCombatTime["segments"][i] then
+				tremove(DPSMateCombatTime["segments"], i)
+			end
+		end
+	end
+	DPSMate.Options:InitializeSegments()
+	DPSMate.Options.Dewdrop:Close()
+	DPSMate:SendMessage(DPSMate.L["purgeoldsegmentsdone"])
 end
 
 function DPSMate.Options:ToggleTitleBarButtonState()

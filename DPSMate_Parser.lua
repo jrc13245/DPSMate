@@ -575,14 +575,16 @@ end
 local UnitDebuff = UnitDebuff
 DPSMate.Parser.PLAYER_AURAS_CHANGED = function(unit)
 	local aura, debuffDispelType
-	for i=1, 4 do
-		DPSTool:SetPlayerBuff(GetPlayerBuff(i, "HARMFUL"))
-		aura = DPSToolTextLeft1:GetText()
-		DPSTool:Hide()
-		if not aura then break end
-		_, _, debuffDispelType = UnitDebuff("player", i);
-		if debuffDispelType and DPSMateAbility[aura] then
-			DPSMateAbility[aura][2] = debuffDispelType
+	if DPSTool.SetPlayerBuff then
+		for i=1, 4 do
+			DPSTool:SetPlayerBuff(GetPlayerBuff(i, "HARMFUL"))
+			aura = DPSToolTextLeft1:GetText()
+			DPSTool:Hide()
+			if not aura then break end
+			_, _, debuffDispelType = UnitDebuff("player", i);
+			if debuffDispelType and DPSMateAbility[aura] then
+				DPSMateAbility[aura][2] = debuffDispelType
+			end
 		end
 	end
 end

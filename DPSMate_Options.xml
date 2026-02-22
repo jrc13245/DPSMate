@@ -3070,6 +3070,26 @@
 							</OnLoad>
 						</Scripts>
 					</Slider>
+					<Slider name="$parent_AutoWipe" inherits="DPSMate_Template_Slider">
+						<Anchors>
+							<Anchor point="LEFT" relativeTo="$parent_UpdateInterval" relativePoint="RIGHT">
+								<Offset x="15" y="0" />
+							</Anchor>
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								this.aide = DPSMate.L["autowipeTooltip"]
+								this.func = function()
+									DPSMateSettings["autowipesessions"] = this:GetValue()
+								end
+								this:SetMinMaxValues(0,30)
+								this:SetValueStep(1)
+								getglobal(this:GetName().."Text"):SetText(DPSMate.L["autowipe"])
+								getglobal(this:GetName().."Low"):SetText("0")
+								getglobal(this:GetName().."High"):SetText("30")
+							</OnLoad>
+						</Scripts>
+					</Slider>
 				</Frames>
 			</Frame>
 

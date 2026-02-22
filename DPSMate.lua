@@ -627,6 +627,9 @@ function DPSMate:RefreshFonts()
 end
 
 local framePointerCache = {}
+function DPSMate:InvalidateFrameCache()
+	framePointerCache = {}
+end
 function DPSMate:SetStatusBarValue()
 
 	if not DPSSettings["windows"][1] or self.Options.TestMode then return end

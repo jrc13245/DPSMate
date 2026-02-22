@@ -8,6 +8,9 @@ DPSMate.DB:RegisterEvent("PLAYER_TARGET_CHANGED")
 DPSMate.DB:RegisterEvent("PLAYER_PET_CHANGED")
 DPSMate.DB:RegisterEvent("PET_STABLE_CLOSED")
 DPSMate.DB:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+DPSMate.DB:RegisterEvent("PARTY_MEMBERS_CHANGED")
+DPSMate.DB:RegisterEvent("RAID_ROSTER_UPDATE")
+DPSMate.DB:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 -- Global Variables
 DPSMate.DB.loaded = false
@@ -169,6 +172,7 @@ local SendAddonMessage = function(prio, prefix, text, chattype)
 end
 
 local CBTCache = {[1] = 0, [2] = 0}
+local pendingGroupUpdateTime = nil -- scheduled delayed OnGroupUpdate retry
 
 local DPSCBT = {}
 local DPSEDD = {}
@@ -537,6 +541,47 @@ DPSMate.DB.VARIABLES_LOADED = function()
 				reportdelay = false
 			}
 		end
+		-- Auto-wipe: nil all per-character data tables every N logins.
+		-- WoW 1.12 does not expose time(), so wall-clock tracking is impossible.
+		-- DPSMateSettings["autowipesessions"] controls the threshold:
+		--   0 (default) = disabled; 7 = wipe every 7 logins (~weekly for daily players).
+		-- DPSMateLastWipe is a login counter; it persists across wipes because
+		-- it is not included in the tables nilled below.
+		if DPSMateSettings["autowipesessions"] == nil then
+			DPSMateSettings["autowipesessions"] = 0
+		end
+		if type(DPSMateLastWipe) ~= "number" then
+			DPSMateLastWipe = 0
+		end
+		local _awSessions = DPSMateSettings["autowipesessions"]
+		if _awSessions > 0 then
+			DPSMateLastWipe = DPSMateLastWipe + 1
+			if DPSMateLastWipe >= _awSessions then
+				DPSMateUser = nil
+				DPSMateAbility = nil
+				DPSMateDamageDone = nil
+				DPSMateEDT = nil
+				DPSMateEDD = nil
+				DPSMateDamageTaken = nil
+				DPSMateDispels = nil
+				DPSMateInterrupts = nil
+				DPSMateDeaths = nil
+				DPSMateEHealing = nil
+				DPSMateTHealing = nil
+				DPSMateHealingTaken = nil
+				DPSMateEHealingTaken = nil
+				DPSMateOverhealing = nil
+				DPSMateOverhealingTaken = nil
+				DPSMateAbsorbs = nil
+				DPSMateThreat = nil
+				DPSMateAurasGained = nil
+				DPSMateCombatTime = nil
+				DPSMateHistory = nil
+				DPSMateFails = nil
+				DPSMateCCBreaker = nil
+				DPSMateLastWipe = 0
+			end
+		end
 		if DPSMateHistory == nil then DPSMateHistory = {} end
 		if DPSMateHistory["names"] == nil then DPSMateHistory["names"] = {} end
 		if DPSMateHistory["DMGDone"] == nil then DPSMateHistory["DMGDone"] = {} end
@@ -557,7 +602,28 @@ DPSMate.DB.VARIABLES_LOADED = function()
 		if DPSMateHistory["Threat"] == nil then DPSMateHistory["Threat"] = {} end
 		if DPSMateHistory["Fail"] == nil then DPSMateHistory["Fail"] = {} end
 		if DPSMateHistory["CCBreaker"] == nil then DPSMateHistory["CCBreaker"] = {} end
+		if DPSMateHistory["timestamps"] == nil then DPSMateHistory["timestamps"] = {} end
 		DPSMateHistory["Fails"] = nil
+		-- Trim any history tables that grew beyond the segment limit due to the
+		-- pruning bug (names was never trimmed; data loops used a broken forward
+		-- iteration that skipped entries).  Iterating backward avoids the index-
+		-- shift problem that caused the original bug.
+		do
+			local maxSeg = DPSMateSettings["datasegments"]
+			local histCats = {"names","timestamps","DMGDone","DMGTaken","EDDone","EDTaken","THealing","EHealing","OHealing","EHealingTaken","THealingTaken","OHealingTaken","Absorbs","Deaths","Interrupts","Dispels","Auras","Threat","Fail","CCBreaker"}
+			for _, cat in ipairs(histCats) do
+				if DPSMateHistory[cat] then
+					for i = DPSMate:TableLength(DPSMateHistory[cat]), maxSeg+1, -1 do
+						tremove(DPSMateHistory[cat], i)
+					end
+				end
+			end
+			if DPSMateCombatTime and DPSMateCombatTime["segments"] then
+				for i = DPSMate:TableLength(DPSMateCombatTime["segments"]), maxSeg+1, -1 do
+					tremove(DPSMateCombatTime["segments"], i)
+				end
+			end
+		end
 		if DPSMateUser == nil then DPSMateUser = {} end
 		if DPSMateAbility == nil then DPSMateAbility = {} end
 		if DPSMateDamageDone == nil then DPSMateDamageDone = {[1]={},[2]={}} end
@@ -790,10 +856,10 @@ DPSMate.DB.PLAYER_LOGIN = function()
 	else 
 		RegisterCVar("CombatLogRangeCreature", 200) 
 	end
-	if GetCVar("CombatDeathLogRange") then 
-		SetCVar("CombatDeathLogRange", 200) 
-	else 
-		RegisterCVar("CombatDeathLogRange", 200) 
+	if GetCVar("CombatDeathLogRange") then
+		SetCVar("CombatDeathLogRange", 200)
+	else
+		RegisterCVar("CombatDeathLogRange", 200)
 	end
 end
 
@@ -901,6 +967,24 @@ DPSMate.DB.ZONE_CHANGED_NEW_AREA = function()
 	this:OnGroupUpdate()
 end
 
+DPSMate.DB.PARTY_MEMBERS_CHANGED = function()
+	this:OnGroupUpdate()
+	-- UnitName may return nil immediately after the event; retry after a short delay.
+	pendingGroupUpdateTime = GT() + 2
+end
+
+DPSMate.DB.RAID_ROSTER_UPDATE = function()
+	this:OnGroupUpdate()
+	pendingGroupUpdateTime = GT() + 2
+end
+
+DPSMate.DB.PLAYER_ENTERING_WORLD = function()
+	-- Roster data is fully available here (unlike VARIABLES_LOADED / PLAYER_LOGIN).
+	if this.loaded then
+		this:OnGroupUpdate()
+	end
+end
+
 function DPSMate.DB:OnGroupUpdate()
 	local type = "raid"
 	local num = GetNumRaidMembers()
@@ -909,19 +993,19 @@ function DPSMate.DB:OnGroupUpdate()
 		type = "party"
 		num = GetNumPartyMembers()
 	end
-	-- Collect all player names first to detect pet name conflicts
+	-- Collect all player names first to detect pet name conflicts.
+	-- UnitIsConnected is intentionally not checked here: a player who just joined
+	-- or has a brief connection blip still appears in the combat log by name.
 	local groupPlayerNames = {}
 	for i=1, num do
-		if UnitIsConnected(type..i) then
-			local pname = UnitName(type..i)
-			if pname then groupPlayerNames[pname] = true end
-		end
+		local pname = UnitName(type..i)
+		if pname and pname ~= "" then groupPlayerNames[pname] = true end
 	end
 	local selfName = UnitName("player")
 	if selfName then groupPlayerNames[selfName] = true end
 	for i=1, num do
-		if UnitIsConnected(type..i) then
-			local name = UnitName(type..i)
+		local name = UnitName(type..i)
+		if name and name ~= "" then
 			local pet = UnitName(type.."pet"..i)
 			local _,classEng = UnitClass(type..i)
 			local fac = UnitFactionGroup(type..i)
@@ -1391,7 +1475,7 @@ function DPSMate.DB:DamageTaken(Duser, Dname, Dhit, Dcrit, Dmiss, Dparry, Ddodge
 				path[20] = path[20] + 1
 			end
 			gen["i"] = gen["i"] + Damount
-			path[14] = (path[14] + Damount)/2
+			path[14] = path[14] + Damount
 			time = CBTCache[cat]
 			path["i"][time] = (path["i"][time] or 0) + Damount
 		else
@@ -2334,6 +2418,11 @@ local notInCombat, cbtpt
 local init=true
 local initTime = 0
 function DPSMate.DB:OnUpdate()
+	-- Delayed roster retry (handles UnitName returning nil right when PARTY_MEMBERS_CHANGED fires)
+	if pendingGroupUpdateTime and GT() >= pendingGroupUpdateTime then
+		self:OnGroupUpdate()
+		pendingGroupUpdateTime = nil
+	end
 	if (CombatState) then
 		notInCombat = false
 		LastUpdate = LastUpdate + arg1
@@ -2445,6 +2534,8 @@ function DPSMate.DB:OnUpdate()
 
 			-- Loading player data to make sure its fetched correctly!
 			DPSMate.Parser:OnLoad()
+			-- Re-run roster sync: by 5s after load, UnitName is reliable for all party slots.
+			this:OnGroupUpdate()
 
 			init = false
 		end
