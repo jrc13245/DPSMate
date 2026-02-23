@@ -35,13 +35,9 @@ function DPSMate.Modules.AurasUptimers:GetSortedTable(arr,k)
 		if DPSMate:ApplyFilter(k, DPSMate:GetUserById(cat)) then
 			local CV = 0
 			for ca, va in pairs(val) do -- 3 Ability
-				for c, v in pairs(va) do -- each one
-					if c==1 then
-						for ce, ve in pairs(v) do
-							CV=CV+1
-						end
-					end
-				end
+				-- Use the stored gain count (path[5]) directly; path[1] may have been
+				-- collapsed to {} on logout to reduce SavedVariables size.
+				CV = CV + (va[5] or 0)
 			end
 			local i = 1
 			while true do
@@ -72,7 +68,9 @@ function DPSMate.Modules.AurasUptimers:EvalTable(user, k)
 		cbt = cbt - 1;
 	end
 	for cat, val in pairs(arr[user[1]]) do -- 3 Ability
-		local CV, CVV = 0, 0
+		-- path[7] holds pre-computed uptime (seconds) collapsed from previous sessions.
+		-- path[1]/path[2] hold this session's gain/loss timestamps (may be empty after collapse).
+		local CV, CVV = val[7] or 0, 0
 		for ca, va in pairs(val[1]) do -- each one
 			if arr[user[1]][cat][2][ca] then
 				CV=CV+(arr[user[1]][cat][2][ca]-va)

@@ -499,14 +499,14 @@ function DPSMate:PruneStaleUsers()
 	end
 end
 
--- Strip time-bucket ["i"] sub-tables from Mode [1] of damage/healing/threat metrics.
--- These tables grow with combat duration (one entry per second) and accumulate across
--- sessions, causing SavedVariables bloat. Called on login and on logout.
+-- Strip ["i"] sub-tables from all modes of all metrics that use them.
+-- Covers damage/healing/threat (per-second time buckets) as well as dispels,
+-- interrupts, and absorbs (event log arrays stored under ["i"]).
+-- Called on login and on logout to keep SavedVariables compact.
 --
--- Metrics have varying nesting depths (2–4 levels) depending on the module.
--- A simple recursive walk is used: wherever ["i"] is a table it is cleared to {}.
--- Numbers stored under ["i"] (user/cause instant-totals) are left untouched.
--- Using {} rather than nil keeps combat event writers (path["i"][time] = ...) safe.
+-- A recursive walk is used: wherever ["i"] is a table it is cleared to {}.
+-- Numbers stored under ["i"] are left untouched.
+-- Using {} rather than nil keeps combat event writers safe.
 local function stripInstantRecursive(t)
 	for k, v in pairs(t) do
 		if k == "i" and type(v) == "table" then
@@ -520,10 +520,40 @@ end
 function DPSMate:StripInstantFromMode1()
 	local metrics = {DPSMateDamageDone, DPSMateDamageTaken, DPSMateEDD, DPSMateEDT,
 	                 DPSMateTHealing, DPSMateEHealing, DPSMateOverhealing, DPSMateHealingTaken,
-	                 DPSMateEHealingTaken, DPSMateOverhealingTaken, DPSMateThreat}
+	                 DPSMateEHealingTaken, DPSMateOverhealingTaken, DPSMateThreat,
+	                 DPSMateDispels, DPSMateInterrupts, DPSMateAbsorbs}
 	for _, metric in pairs(metrics) do
-		if metric and metric[1] then
-			stripInstantRecursive(metric[1])
+		if metric then
+			if metric[1] then stripInstantRecursive(metric[1]) end
+			if metric[2] then stripInstantRecursive(metric[2]) end
+		end
+	end
+end
+
+-- Collapse AurasGained timestamp arrays in Mode [1] and [2] into compact uptime totals.
+-- path[1] (gain times) and path[2] (loss times) grow unboundedly with each buff
+-- application. The pre-computed total is stored in path[7] so EvalTable can still
+-- display accurate uptime percentages across sessions.
+function DPSMate:CollapseAuraTimestamps()
+	if not DPSMateAurasGained then return end
+	for mode = 1, 2 do
+		local modeData = DPSMateAurasGained[mode]
+		if modeData then
+			for uid, abilities in pairs(modeData) do
+				for abilityId, path in pairs(abilities) do
+					if type(path) == "table" and type(path[1]) == "table" then
+						local total = path[7] or 0
+						for i, gainTime in pairs(path[1]) do
+							if path[2] and path[2][i] then
+								total = total + (path[2][i] - gainTime)
+							end
+						end
+						path[7] = total
+						path[1] = {}
+						path[2] = {}
+					end
+				end
+			end
 		end
 	end
 end

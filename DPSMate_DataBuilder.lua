@@ -703,9 +703,10 @@ DPSMate.DB.VARIABLES_LOADED = function()
 		end
 
 		DPSMate:OnLoad()
-		-- Remove time-bucket ["i"] data left in Mode [1] from a previous session.
-		-- Fresh data accumulates during this session and is stripped again on logout.
+		-- Strip ["i"] event/bucket data and collapse AurasGained timestamp arrays
+		-- left over from a previous session (e.g. from a crash / force-quit).
 		DPSMate:StripInstantFromMode1()
+		DPSMate:CollapseAuraTimestamps()
 		DPSMate.Options:InitializeSegments()
 		DPSMate.Options:InitializeHideShowWindow()
 

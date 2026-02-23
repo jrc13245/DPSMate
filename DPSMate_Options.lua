@@ -575,9 +575,10 @@ function DPSMate.Options:Logout()
 	DPSMate.Options.OldLogout()
 end
 Logout = function()
-	-- Strip time-bucket ["i"] tables from Mode [1] and prune stale abilities before
-	-- SavedVariables are written to disk, to keep the file size manageable.
+	-- Strip ["i"] event/bucket tables and collapse AurasGained timestamp arrays
+	-- before SavedVariables are written to disk, to keep the file size manageable.
 	DPSMate:StripInstantFromMode1()
+	DPSMate:CollapseAuraTimestamps()
 	if DPSMateSettings["dataresetslogout"] == 3 then
 		DPSMate_Logout:Show()
 	elseif DPSMateSettings["dataresetslogout"] == 2 then
