@@ -1368,7 +1368,7 @@ end
 
 function DPSMate.Sync:InterruptsAllOut()
 	if DPSMateInterrupts[1][pid] then
-		Buffer[cou] = {"DPSMate_InterruptsAll", playerclass..","..DPSMateInterrupts[1][pid]["i"][1]..","}
+		Buffer[cou] = {"DPSMate_InterruptsAll", playerclass..","..( DPSMateInterrupts[1][pid]["i"][1] or 0 )..","}
 		cou = cou + 1
 	end
 end
@@ -1396,7 +1396,7 @@ function DPSMate.Sync:DispelsOut()
 	local ab, user
 	for cat, val in pairs(DPSMateDispels[1][pid]) do -- Ability
 		if cat=="i" then
-			Buffer[cou] = {"DPSMate_iDispels", val[1]}
+			Buffer[cou] = {"DPSMate_iDispels", tostring(val[1] or 0)}
 			cou = cou + 1
 		else
 			ab = DPSMate:GetAbilityById(cat)

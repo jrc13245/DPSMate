@@ -998,9 +998,18 @@ function DPSMate.DB:OnGroupUpdate()
 	-- UnitIsConnected is intentionally not checked here: a player who just joined
 	-- or has a brief connection blip still appears in the combat log by name.
 	local groupPlayerNames = {}
+	local allNamesResolved = true
 	for i=1, num do
 		local pname = UnitName(type..i)
-		if pname and pname ~= "" then groupPlayerNames[pname] = true end
+		if pname and pname ~= "" then
+			groupPlayerNames[pname] = true
+		else
+			allNamesResolved = false
+		end
+	end
+	-- If any slot had a nil name, schedule another retry in 1s to pick them up.
+	if not allNamesResolved then
+		pendingGroupUpdateTime = GT() + 1
 	end
 	local selfName = UnitName("player")
 	if selfName then groupPlayerNames[selfName] = true end
@@ -2420,9 +2429,11 @@ local init=true
 local initTime = 0
 function DPSMate.DB:OnUpdate()
 	-- Delayed roster retry (handles UnitName returning nil right when PARTY_MEMBERS_CHANGED fires)
+	-- Clear the timer BEFORE calling OnGroupUpdate so that OnGroupUpdate can re-set it
+	-- if it still finds nil-name slots (keeps retrying until all names resolve).
 	if pendingGroupUpdateTime and GT() >= pendingGroupUpdateTime then
-		self:OnGroupUpdate()
 		pendingGroupUpdateTime = nil
+		self:OnGroupUpdate()
 	end
 	if (CombatState) then
 		notInCombat = false
