@@ -177,6 +177,7 @@ end
 
 function DPSMate.Modules.Damage:ShowTooltip(user,k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local a,b,c = DPSMate.Modules.Damage:EvalTable(DPSMateUser[user], k)
 		local db = DPSMate:GetModeByArr(DPSMateEDT, k, "EDTaken")
 		local i, p = 1, 0

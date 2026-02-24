@@ -340,10 +340,11 @@ function DPSMate.Modules.DetailsProcs:ShowTooltip(obj)
 		if string.find(obj:GetName(), "Compare") then
 			user = DetailsUserComp
 		end
-		if db[DPSMateUser[user][1]][obj.id] then
+		local uid = DPSMateUser[user] and DPSMateUser[user][1]
+		if uid and db[uid] and db[uid][obj.id] then
 			GameTooltip:SetOwner(obj)
 			GameTooltip:AddLine(DPSMate:GetAbilityById(obj.id))
-			for cat, val in db[DPSMateUser[user][1]][obj.id][3] do
+			for cat, val in db[uid][obj.id][3] do
 				GameTooltip:AddDoubleLine(DPSMate:GetUserById(cat),val,1,1,1,1,1,1)
 			end
 			GameTooltip:Show()

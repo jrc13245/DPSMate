@@ -93,6 +93,7 @@ end
 
 function DPSMate.Modules.HPS:ShowTooltip(user, k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local a,b,c = DPSMate.Modules.HPS:EvalTable(DPSMateUser[user], k)
 		local db, cbt = DPSMate:GetModeByArr(DPSMateHealingTaken, k, "THealingTaken")
 		local abn, p, i = {}, 1, 1

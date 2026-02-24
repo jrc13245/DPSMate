@@ -497,8 +497,10 @@ function DPSMate.Parser:OnLoad()
 	self.player, self.realm = UnitName("player")
 	_,playerclass = UnitClass("player")
 	DPSMate.DB:BuildUser(self.player, strlower(playerclass))
-	DPSMateUser[self.player][2] = strlower(playerclass)
-	DPSMateUser[self.player][8] = UL("player")
+	if DPSMateUser[self.player] then
+		DPSMateUser[self.player][2] = strlower(playerclass)
+		DPSMateUser[self.player][8] = UL("player")
+	end
 	-- Prevent this addon from causing issues
 	if SW_FixLogStrings then
 		DPSMate:SendMessage("Please disable SW_StatsFixLogStrings and SW_Stats. Those addons cause issues.")

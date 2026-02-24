@@ -1806,10 +1806,13 @@ function DPSMate.DB:Absorb(ability, abilityTarget, incTarget)
 	abilityTarget = self:BuildUser(abilityTarget)
 	ability = self:BuildAbility(ability)
 	local AbsorbingAbility
-	for cat, val in pairs(tablemodes) do 
-		AbsorbingAbility = self:GetAbsorbingShield(DPSMateAbility[DPSMate:GetAbilityById(ability)][3], abilityTarget, cat)
+	for cat, val in pairs(tablemodes) do
+		local abilityName = DPSMate:GetAbilityById(ability)
+		local abilityEntry = abilityName and DPSMateAbility[abilityName]
+		if not abilityEntry then break end
+		AbsorbingAbility = self:GetAbsorbingShield(abilityEntry[3], abilityTarget, cat)
 		if AbsorbingAbility[1] then
-			if not DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget] then
+			if not (DPSAbsorb[cat] and DPSAbsorb[cat][abilityTarget] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget]) then
 				DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget] = {}
 			end
 			path = DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget]
@@ -2206,10 +2209,11 @@ end
 
 function DPSMate.DB:BuildBuffs(cause, target, ability, bool)
 	if not DPSMate.RegistredModules["aurasgained"] then return end
+	if not DPSAurasGained[1] then return end
 	target = self:BuildUser(target)
 	cause = self:BuildUser(cause)
 	ability = self:BuildAbility(ability)
-	for cat, val in pairs(tablemodes) do 
+	for cat, val in pairs(tablemodes) do
 		if not DPSAurasGained[cat][target] then
 			DPSAurasGained[cat][target] = {}
 		end
@@ -2241,6 +2245,7 @@ end
 
 function DPSMate.DB:DestroyBuffs(target, ability)
 	if not DPSMate.RegistredModules["aurasgained"] then return end
+	if not DPSAurasGained[1] then return end
 	target = self:BuildUser(target)
 	ability = self:BuildAbility(ability)
 	local TL

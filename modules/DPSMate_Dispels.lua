@@ -122,6 +122,7 @@ end
 
 function DPSMate.Modules.Dispels:ShowTooltip(user,k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local p, sum = 0, 0
 		local a, b, abn, abnt = {}, {}, {}, {}
 		local arr = DPSMate:GetMode(k)

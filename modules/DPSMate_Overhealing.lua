@@ -102,6 +102,7 @@ end
 
 function DPSMate.Modules.Overhealing:ShowTooltip(user, k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local a,b,c = DPSMate.Modules.Overhealing:EvalTable(DPSMateUser[user], k)
 		local db = DPSMate:GetModeByArr(DPSMateOverhealingTaken, k, "OHealingTaken")
 		local abn, p, i = {}, 1, 1

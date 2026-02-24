@@ -973,8 +973,9 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:ProcsDropDown()
 	}
 	
 	-- Adding dynamic channel
-	if arr[DPSMateUser[DetailsUser][1]] then
-		for cat, val in pairs(arr[DPSMateUser[DetailsUser][1]]) do
+	local uid = DPSMateUser[DetailsUser] and DPSMateUser[DetailsUser][1]
+	if uid and arr[uid] then
+		for cat, val in pairs(arr[uid]) do
 			local ability = DPSMate:GetAbilityById(cat)
 			if DPSMate:TContains(DPSMate.Parser.procs, ability) then
 				UIDropDownMenu_AddButton{

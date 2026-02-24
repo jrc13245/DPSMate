@@ -102,6 +102,7 @@ end
 
 function DPSMate.Modules.EffectiveHealing:ShowTooltip(user, k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local a,b,c = DPSMate.Modules.EffectiveHealing:EvalTable(DPSMateUser[user], k)
 		local db = DPSMate:GetModeByArr(DPSMateEHealingTaken, k, "EHealingTaken")
 		local abn, p, i = {}, 1, 1

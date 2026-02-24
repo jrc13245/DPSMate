@@ -179,6 +179,7 @@ end
 
 function DPSMate.Modules.DPS:ShowTooltip(user,k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local a,b,c = DPSMate.Modules.DPS:EvalTable(DPSMateUser[user], k)
 		local db, cbt = DPSMate:GetModeByArr(DPSMateEDT, k, "EDTaken")
 		local i, p = 1, 0

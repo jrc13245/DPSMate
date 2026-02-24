@@ -147,10 +147,11 @@ end
 
 function DPSMate.Modules.CureDisease:ShowTooltip(user,k)
 	if DPSMateSettings["informativetooltips"] then
+		if not DPSMateUser[user] then return end
 		local p, sum = 0, 0
 		local a, b, abn, abnt = {}, {}, {}, {}
 		local arr = DPSMate:GetMode(k)
-		if arr[DPSMateUser[user][1]] then 
+		if arr[DPSMateUser[user][1]] then
 			for cat, val in pairs(arr[DPSMateUser[user][1]]) do -- 41 Ability
 				if cat~="i" then
 					for ca, va in pairs(val) do -- Cleansed guy
