@@ -1305,6 +1305,7 @@ function DPSMate.DB:DamageTaken(Duser, Dname, Dhit, Dcrit, Dmiss, Dparry, Ddodge
 	end
 
 	for cat=1,2 do
+		if not DPSDMGTaken[cat] then DPSDMGTaken[cat] = {} end
 		gen = DPSDMGTaken[cat]
 		if not gen[Duser] then gen[Duser] = {i=0} end
 		gen = gen[Duser]
@@ -1661,7 +1662,8 @@ function DPSMate.DB:RegisterAbsorb(owner, ability, abilityTarget)
 	owner = self:BuildUser(owner)
 	abilityTarget = self:BuildUser(abilityTarget)
 	ability = self:BuildAbility(ability)
-	for cat, val in pairs(tablemodes) do 
+	for cat, val in pairs(tablemodes) do
+		if not DPSAbsorb[cat] then DPSAbsorb[cat] = {} end
 		if not DPSAbsorb[cat][abilityTarget] then
 			DPSAbsorb[cat][abilityTarget] = {}
 		end
@@ -1713,7 +1715,7 @@ end
 
 function DPSMate.DB:GetActiveAbsorbAbilityByPlayer(ability, abilityTarget, cate)
 	local ActiveShield = {}
-	if DPSAbsorb[cate][abilityTarget] then
+	if DPSAbsorb[cate] and DPSAbsorb[cate][abilityTarget] then
 		for cat, val in pairs(DPSAbsorb[cate][abilityTarget]) do
 			for ca, va in pairs(val) do
 				if ca~="i" then
@@ -2059,7 +2061,8 @@ function DPSMate.DB:DeathHistory(target, cause, ability, amount, hit, crit, type
 	cause = self:BuildUser(cause)
 	ability = self:BuildAbility(ability)
 	local hitCritCrush
-	for cat, val in pairs(tablemodes) do 
+	for cat, val in pairs(tablemodes) do
+		if not DPSDeath[cat] then DPSDeath[cat] = {} end
 		if not DPSDeath[cat][target] then
 			DPSDeath[cat][target] = {}
 		end
