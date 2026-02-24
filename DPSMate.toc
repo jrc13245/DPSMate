@@ -6,7 +6,6 @@
 ## Author: Shino <Synced> - Kronos, Torio
 ## OptionalDeps: KLHThreatMeter
 ## SavedVariables: DPSMateSettings
-## SavedVariablesPerCharacter: DPSMateUser, DPSMateAbility, DPSMateDamageDone, DPSMateEDT, DPSMateEDD, DPSMateDamageTaken, DPSMateDispels, DPSMateInterrupts, DPSMateDeaths, DPSMateEHealing, DPSMateTHealing, DPSMateHealingTaken, DPSMateEHealingTaken, DPSMateOverhealing, DPSMateOverhealingTaken, DPSMateAbsorbs, DPSMateThreat, DPSMateAurasGained, DPSMateCombatTime, DPSMateHistory, DPSMateFails, DPSMateCCBreaker, DPSMATERESET, DPSMateLastWipe
 
 libs\AceLibrary\AceLibrary.lua
 libs\Dewdrop-2.0\Dewdrop-2.0.lua
@@ -52,8 +51,6 @@ locales\Babble-Boss-2.3_zhCN.lua
 locales\NPCDB-1.0_zhCN.lua
 locales\zhCN.lua
 locales\DPSMate_ParserZHCN.lua
-
-DPSMate_ParserNP.lua
 
 DPSMate_Options.lua
 DPSMate_Sync.lua

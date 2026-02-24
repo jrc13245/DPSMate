@@ -541,109 +541,34 @@ DPSMate.DB.VARIABLES_LOADED = function()
 				reportdelay = false
 			}
 		end
-		-- Auto-wipe: nil all per-character data tables every N logins.
-		-- WoW 1.12 does not expose time(), so wall-clock tracking is impossible.
-		-- DPSMateSettings["autowipesessions"] controls the threshold:
-		--   0 (default) = disabled; 7 = wipe every 7 logins (~weekly for daily players).
-		-- DPSMateLastWipe is a login counter; it persists across wipes because
-		-- it is not included in the tables nilled below.
-		if DPSMateSettings["autowipesessions"] == nil then
-			DPSMateSettings["autowipesessions"] = 0
-		end
-		if type(DPSMateLastWipe) ~= "number" then
-			DPSMateLastWipe = 0
-		end
-		local _awSessions = DPSMateSettings["autowipesessions"]
-		if _awSessions > 0 then
-			DPSMateLastWipe = DPSMateLastWipe + 1
-			if DPSMateLastWipe >= _awSessions then
-				DPSMateUser = nil
-				DPSMateAbility = nil
-				DPSMateDamageDone = nil
-				DPSMateEDT = nil
-				DPSMateEDD = nil
-				DPSMateDamageTaken = nil
-				DPSMateDispels = nil
-				DPSMateInterrupts = nil
-				DPSMateDeaths = nil
-				DPSMateEHealing = nil
-				DPSMateTHealing = nil
-				DPSMateHealingTaken = nil
-				DPSMateEHealingTaken = nil
-				DPSMateOverhealing = nil
-				DPSMateOverhealingTaken = nil
-				DPSMateAbsorbs = nil
-				DPSMateThreat = nil
-				DPSMateAurasGained = nil
-				DPSMateCombatTime = nil
-				DPSMateHistory = nil
-				DPSMateFails = nil
-				DPSMateCCBreaker = nil
-				DPSMateLastWipe = 0
-			end
-		end
-		if DPSMateHistory == nil then DPSMateHistory = {} end
-		if DPSMateHistory["names"] == nil then DPSMateHistory["names"] = {} end
-		if DPSMateHistory["DMGDone"] == nil then DPSMateHistory["DMGDone"] = {} end
-		if DPSMateHistory["DMGTaken"] == nil then DPSMateHistory["DMGTaken"] = {} end
-		if DPSMateHistory["EDDone"] == nil then DPSMateHistory["EDDone"] = {} end
-		if DPSMateHistory["EDTaken"] == nil then DPSMateHistory["EDTaken"] = {} end
-		if DPSMateHistory["THealing"] == nil then DPSMateHistory["THealing"] = {} end
-		if DPSMateHistory["EHealing"] == nil then DPSMateHistory["EHealing"] = {} end
-		if DPSMateHistory["OHealing"] == nil then DPSMateHistory["OHealing"] = {} end
-		if DPSMateHistory["EHealingTaken"] == nil then DPSMateHistory["EHealingTaken"] = {} end
-		if DPSMateHistory["THealingTaken"] == nil then DPSMateHistory["THealingTaken"] = {} end
-		if DPSMateHistory["OHealingTaken"] == nil then DPSMateHistory["OHealingTaken"] = {} end
-		if DPSMateHistory["Absorbs"] == nil then DPSMateHistory["Absorbs"] = {} end
-		if DPSMateHistory["Deaths"] == nil then DPSMateHistory["Deaths"] = {} end
-		if DPSMateHistory["Interrupts"] == nil then DPSMateHistory["Interrupts"] = {} end
-		if DPSMateHistory["Dispels"] == nil then DPSMateHistory["Dispels"] = {} end
-		if DPSMateHistory["Auras"] == nil then DPSMateHistory["Auras"] = {} end
-		if DPSMateHistory["Threat"] == nil then DPSMateHistory["Threat"] = {} end
-		if DPSMateHistory["Fail"] == nil then DPSMateHistory["Fail"] = {} end
-		if DPSMateHistory["CCBreaker"] == nil then DPSMateHistory["CCBreaker"] = {} end
-		if DPSMateHistory["timestamps"] == nil then DPSMateHistory["timestamps"] = {} end
-		DPSMateHistory["Fails"] = nil
-		-- Trim any history tables that grew beyond the segment limit due to the
-		-- pruning bug (names was never trimmed; data loops used a broken forward
-		-- iteration that skipped entries).  Iterating backward avoids the index-
-		-- shift problem that caused the original bug.
-		do
-			local maxSeg = DPSMateSettings["datasegments"]
-			local histCats = {"names","timestamps","DMGDone","DMGTaken","EDDone","EDTaken","THealing","EHealing","OHealing","EHealingTaken","THealingTaken","OHealingTaken","Absorbs","Deaths","Interrupts","Dispels","Auras","Threat","Fail","CCBreaker"}
-			for _, cat in ipairs(histCats) do
-				if DPSMateHistory[cat] then
-					for i = DPSMate:TableLength(DPSMateHistory[cat]), maxSeg+1, -1 do
-						tremove(DPSMateHistory[cat], i)
-					end
-				end
-			end
-			if DPSMateCombatTime and DPSMateCombatTime["segments"] then
-				for i = DPSMate:TableLength(DPSMateCombatTime["segments"]), maxSeg+1, -1 do
-					tremove(DPSMateCombatTime["segments"], i)
-				end
-			end
-		end
-		if DPSMateUser == nil then DPSMateUser = {} end
-		if DPSMateAbility == nil then DPSMateAbility = {} end
-		if DPSMateDamageDone == nil then DPSMateDamageDone = {[1]={},[2]={}} end
-		if DPSMateDamageTaken == nil then DPSMateDamageTaken = {[1]={},[2]={}} end
-		if DPSMateEDD == nil then DPSMateEDD = {[1]={},[2]={}} end
-		if DPSMateEDT == nil then DPSMateEDT = {[1]={},[2]={}} end
-		if DPSMateTHealing == nil then DPSMateTHealing = {[1]={},[2]={}} end
-		if DPSMateEHealing == nil then DPSMateEHealing = {[1]={},[2]={}} end
-		if DPSMateOverhealing == nil then DPSMateOverhealing = {[1]={},[2]={}} end
-		if DPSMateHealingTaken == nil then DPSMateHealingTaken = {[1]={},[2]={}} end
-		if DPSMateEHealingTaken == nil then DPSMateEHealingTaken = {[1]={},[2]={}} end
-		if DPSMateOverhealingTaken == nil then DPSMateOverhealingTaken = {[1]={},[2]={}} end
-		if DPSMateAbsorbs == nil then DPSMateAbsorbs = {[1]={},[2]={}} end
-		if DPSMateDispels == nil then DPSMateDispels = {[1]={},[2]={}} end
-		if DPSMateDeaths == nil then DPSMateDeaths = {[1]={},[2]={}} end
-		if DPSMateInterrupts == nil then DPSMateInterrupts = {[1]={},[2]={}} end
-		if DPSMateAurasGained == nil then DPSMateAurasGained = {[1]={},[2]={}} end
-		if DPSMateThreat == nil then DPSMateThreat = {[1]={},[2]={}} end
-		if DPSMateFails == nil then DPSMateFails = {[1]={},[2]={}} end
-		if DPSMateCCBreaker == nil then DPSMateCCBreaker = {[1]={},[2]={}} end
+		DPSMateHistory = {
+			names={}, timestamps={},
+			DMGDone={}, DMGTaken={}, EDDone={}, EDTaken={},
+			THealing={}, EHealing={}, OHealing={},
+			EHealingTaken={}, THealingTaken={}, OHealingTaken={},
+			Absorbs={}, Deaths={}, Interrupts={}, Dispels={},
+			Auras={}, Threat={}, Fail={}, CCBreaker={},
+		}
+		DPSMateUser = {}
+		DPSMateAbility = {}
+		DPSMateDamageDone = {[1]={},[2]={}}
+		DPSMateDamageTaken = {[1]={},[2]={}}
+		DPSMateEDD = {[1]={},[2]={}}
+		DPSMateEDT = {[1]={},[2]={}}
+		DPSMateTHealing = {[1]={},[2]={}}
+		DPSMateEHealing = {[1]={},[2]={}}
+		DPSMateOverhealing = {[1]={},[2]={}}
+		DPSMateHealingTaken = {[1]={},[2]={}}
+		DPSMateEHealingTaken = {[1]={},[2]={}}
+		DPSMateOverhealingTaken = {[1]={},[2]={}}
+		DPSMateAbsorbs = {[1]={},[2]={}}
+		DPSMateDispels = {[1]={},[2]={}}
+		DPSMateDeaths = {[1]={},[2]={}}
+		DPSMateInterrupts = {[1]={},[2]={}}
+		DPSMateAurasGained = {[1]={},[2]={}}
+		DPSMateThreat = {[1]={},[2]={}}
+		DPSMateFails = {[1]={},[2]={}}
+		DPSMateCCBreaker = {[1]={},[2]={}}
 		
 		if DPSMate.Modules.DPS then DPSMate.Modules.DPS.DB = DPSMateDamageDone end
 		if DPSMate.Modules.Damage then DPSMate.Modules.Damage.DB = DPSMateDamageDone end
@@ -703,57 +628,11 @@ DPSMate.DB.VARIABLES_LOADED = function()
 		end
 
 		DPSMate:OnLoad()
-		-- Strip ["i"] event/bucket data and collapse AurasGained timestamp arrays
-		-- left over from a previous session (e.g. from a crash / force-quit).
-		DPSMate:StripInstantFromMode1()
-		DPSMate:CollapseAuraTimestamps()
 		DPSMate.Options:InitializeSegments()
 		DPSMate.Options:InitializeHideShowWindow()
 
-		if not DPSMATERESET or DPSMATERESET<DPSMate.VERSION then
-			DPSMateUser = {}
-			DPSMateAbility = {}
-			DPSMATERESET = DPSMate.VERSION
-			DPSMate.Options:PopUpAccept(true, true)
-		end
-		
-		-- Initialise abilitylen from the maximum ID stored in the registry, NOT the entry
-		-- count.  If any entries were ever deleted the count falls below the max, causing
-		-- BuildAbility to reuse an existing ID and corrupt the name→ID mapping.
-		do
-			local maxAId = 0
-			for _, aData in pairs(DPSMateAbility) do
-				if aData[1] and aData[1] > maxAId then maxAId = aData[1] end
-			end
-			this.abilitylen = maxAId
-		end
-		-- Repair: detect duplicate IDs in DPSMateAbility (caused by the bug above) and
-		-- reassign the later duplicate a fresh ID above the current maximum so that name
-		-- lookups work correctly going forward.
-		do
-			local seenIds = {}
-			for aName, aData in pairs(DPSMateAbility) do
-				local aid = aData[1]
-				if aid then
-					if seenIds[aid] then
-						-- Collision: give this entry a new unique ID.
-						this.abilitylen = this.abilitylen + 1
-						aData[1] = this.abilitylen
-					else
-						seenIds[aid] = aName
-					end
-				end
-			end
-		end
-		DPSMate.AbilityId = nil  -- invalidate reverse-lookup cache after any repairs
-
-		this.userlen = DPSMate:TableLength(DPSMateUser)
-		if this.userlen==0 then
-			this.userlen = 1
-		end
-		if this.abilitylen == 0 then
-			this.abilitylen = 1
-		end
+		this.userlen = 1
+		this.abilitylen = 1
 
 		DPSMate.Sync:OnLoad()
 		
@@ -2134,6 +2013,9 @@ function DPSMate.DB:Dispels(cause, Dname, target, ability)
 			}
 		end
 		gen = DPSDispel[cat][cause]
+		if not gen["i"] then
+			gen["i"] = {[1] = 0, [2] = {}}
+		end
 		if not gen[Dname] then
 			gen[Dname] = {}
 		end

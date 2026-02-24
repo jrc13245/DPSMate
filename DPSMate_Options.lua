@@ -840,8 +840,6 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 					[2] = {}
 				},
 			}
-			DPSMateLastWipe = 0
-
 			DPSMate:UpdatePointer()
 			DPSMate.DB:UpdatePointer()
 
