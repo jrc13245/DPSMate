@@ -45,6 +45,7 @@ local tinsert = table.insert
 local strformat = string.format
 
 function DPSMate.Modules.CurePoison:IsValid(ab, cast)
+	if not DPSMateAbility[ab] then return false end
 	if DPSMateAbility[ab][2]==DPSMate.L["poison"] or (DPSMate.Parser.DePoison[cast] and not DPSMateAbility[ab][2]) or (DPSMate.Parser.DePoison[cast] and DPSMateAbility[ab][2] and DPSMateAbility[ab][2]==DPSMate.L["poison"]) then
 		return true
 	end

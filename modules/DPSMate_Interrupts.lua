@@ -108,6 +108,7 @@ function DPSMate.Modules.Interrupts:EvalTable(user, k)
 		end
 	end
 	for _, vvv in pairs(u) do
+		if not arr[vvv] then break end
 		for cat, val in pairs(arr[vvv]) do -- 41 Ability
 			if cat~="i" then
 				local CV = 0

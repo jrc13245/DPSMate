@@ -80,7 +80,7 @@ function DPSMate.Modules.FriendlyFire:EvalTable(user, k)
 	local arr = DPSMate:GetMode(k)
 	for c, v in pairs(arr) do
 		local cName = DPSMate:GetUserById(c)
-		if v[user[1]] and DPSMateUser[cName][3] == user[3] and DPSMateUser[cName][3] then
+		if v[user[1]] and DPSMateUser[cName] and DPSMateUser[cName][3] == user[3] and DPSMateUser[cName][3] then
 			for cat, val in v[user[1]] do
 				if cat~="i" then
 					if temp[c] then 

@@ -681,7 +681,7 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 		ability = strsub(nextword, j+1)
 		
 		local causeAbility = "Counterspell"
-		local usr = DPSMateUser[source]
+		local usr = DPSMateUser[Player]
 		if usr then
 			if usr[2] == "priest" then
 				causeAbility = "Silence"
@@ -690,7 +690,6 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 				local owner = DPSMate:GetUserById(usr[6])
 				if owner and DPSMateUser[owner] then
 					causeAbility = "Spell Lock"
-					source = owner
 				end
 			end
 		end
@@ -748,12 +747,13 @@ function DPSMate.Parser:PeriodicDamage(msg)
 		return
 	elseif choice == 5 then
 		i,j = strfind(source, " 's ", 1, true)
+		if not i then return end
 		local ability = strsub(source, j+1)
 		source = strsub(msg, 1, i-1)
 		i,j = strfind(msg, ".", k, true)
 		local target = strsub(msg, k, i-1)
-		DB:EnemyDamage(true, nil, source, ability.."(Periodic)", 0, 0, 0, 0, 0, 1, amount, target, 0, 0)
-		DB:DamageDone(source, ability.."(Periodic)", 0, 0, 0, 0, 0, 1, amount, 0, 0)
+		DB:EnemyDamage(true, nil, source, ability.."(Periodic)", 0, 0, 0, 0, 0, 1, 0, target, 0, 0)
+		DB:DamageDone(source, ability.."(Periodic)", 0, 0, 0, 0, 0, 1, 0, 0, 0)
 		return
 	else
 		nextword = source
@@ -835,8 +835,8 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 					local src = strsub(msg, p+1, i-1)
 					i,j = strfind(msg, ".", j+1, true)
 					local ab = strsub(msg, j+1, i-1)
-					DB:EnemyDamage(true, nil, src, ability, 0, 0, 0, 0, 0, 1, 0, tar, 0, 0)
-					DB:DamageDone(src, ability, 0, 0, 0, 0, 0, 1, 0, 0, 0)
+					DB:EnemyDamage(true, nil, src, ab, 0, 0, 0, 0, 0, 1, 0, tar, 0, 0)
+					DB:DamageDone(src, ab, 0, 0, 0, 0, 0, 1, 0, 0, 0)
 					return
 				end
 
@@ -1195,7 +1195,7 @@ function DPSMate.Parser:CreatureVsSelfHits(msg)
 		end
 		DB:EnemyDamage(false, nil, target, AAttack, hit, crit, 0, 0, 0, 0, amount, source, block, crush)
 		DB:DamageTaken(target, AAttack, hit, crit, 0, 0, 0, 0, amount, source, crush, blockAmount)
-		DB:DeathHistory(target, a, AAttack, amount, hit, crit, 0, crush)
+		DB:DeathHistory(target, source, AAttack, amount, hit, crit, 0, crush)
 	else
 		i,j = strfind(msg, " on ", k, true)
 		if i then
@@ -1310,14 +1310,14 @@ function DPSMate.Parser:CreatureVsSelfSpellDamage(msg)
 		DB:EnemyDamage(false, nil, Player, ability, 0, 0, miss, parry, dodge, resist, 0, source, block, 0)
 		DB:DamageTaken(Player, ability, 0, 0, miss, parry, dodge, resist, 0, source, 0, block)
 		return
-	elseif choice == 8 then
+	elseif choice == 7 or choice == 8 then
 		i,j = strfind(msg, ".", k, true)
 		nextword = strsub(msg, k, i-1)
-		
+
 		i,j = strfind(nextword, " 's ", 1, true);
 		local source = strsub(nextword, 1, i-1);
 		local ability = strsub(nextword, j+1)
-		
+
 		if choice == 7 then
 			local causeAbility = "Counterspell"
 			local usr = DPSMateUser[Player]
@@ -1422,6 +1422,8 @@ function DPSMate.Parser:PeriodicSelfDamage(msg)
 		i,j = strfind(msg, " 's ", k, true);
 		local source = strsub(msg, k, i-1);
 		local ability = strsub(msg, j+1)
+		local pi = strfind(ability, ".", 1, true)
+		if pi then ability = strsub(ability, 1, pi-1) end
 		DB:Absorb(ability.."(Periodic)", target, source)
 		return
 	elseif choice == 8 then
@@ -1438,7 +1440,9 @@ function DPSMate.Parser:PeriodicSelfDamage(msg)
 		i,j = strfind(msg, " 's ", 1, true);
 		local source = strsub(msg, 1, i-1);
 		local ability = strsub(msg, j+1)
-		
+		local pi = strfind(ability, ".", 1, true)
+		if pi then ability = strsub(ability, 1, pi-1) end
+
 		DB:EnemyDamage(false, nil, Player, ability, 0, 0, 0, 0, 0, 1, 0, source, 0, 0)
 		DB:DamageTaken(Player, ability, 0, 0, 0, 0, 0, 1, 0, source, 0, 0)
 	end
@@ -1954,19 +1958,26 @@ function DPSMate.Parser:SpellHostilePlayerBuff(msg)
 	
 	-- Ignoring for now
 	-- Saltpillar's Thorns were resisted by Blackhand Veteran
-	if choice >= 8 then return end
-	-- TODO: Spell reflect handling
-	if choice == 12 then return end
-	-- TODO: Spell resists
-	if choice == 13 then return end
-
-	-- Do not track
-	if choice == 14 then return end
+	if choice >= 8 and choice <= 11 then return end
+	-- Spell reflect, resist, evade — not tracked
+	if choice >= 13 then return end
 	
 	if choice < 3 then
 		i,j = strfind(nextword, " 's ", 1, true)
-		local source = strsub(nextword, 1, i-1)
-		local ability = strsub(nextword, j+1)
+		local source, ability
+		if i then
+			source = strsub(nextword, 1, i-1)
+			ability = strsub(nextword, j+1)
+		else
+			i,j = strfind(nextword, "Your ", 1, true)
+			if i then
+				source = Player
+				ability = strsub(nextword, j+1)
+			else
+				source = Player
+				ability = nextword
+			end
+		end
 		i,j = strfind(msg, " for ", k, true)
 		local target = strsub(msg, k, i-1)
 		k = j+1
@@ -2017,8 +2028,14 @@ function DPSMate.Parser:SpellHostilePlayerBuff(msg)
 			DB:DestroyBuffs(source, ability)
 		else
 			i,j = strfind(nextword, " 's ", 1, true)
-			local target = strsub(nextword, 1, i-1)
-			local ability = strsub(nextword, j+1)
+			local target, ability
+			if i then
+				target = strsub(nextword, 1, i-1)
+				ability = strsub(nextword, j+1)
+			else
+				target = source
+				ability = nextword
+			end
 			
 			if choice == 3 then
 				DB:BuildBuffs(target, source, ability, true)
@@ -2092,10 +2109,13 @@ end
 
 function DPSMate.Parser:SpellAuraGoneSelf(msg)
 	local i,j = strfind(msg, " from ", 1, true)
+	if not i then return end
 	i = strfind(msg, ".", j+1, true)
+	if not i then return end
 	local source = strsub(msg, j+1, i -1)
 	if source == "you" then source = Player end
 	local i,j = strfind(msg, " fades ", 1, true)
+	if not i then return end
 	local ability = strsub(msg, 1, i-1)
 	i,j = strfind(ability, "(", 1, true)
 	if i then ability = strsub(ability, 1, i-2) end
@@ -2110,8 +2130,10 @@ end
 
 function DPSMate.Parser:SpellAuraGoneParty(msg)
 	local i,j = strfind(msg, " fades from ", 1, true)
+	if not i then return end
 	local ability = strsub(msg, 1, i-1)
 	local i = strfind(msg, ".", j+1, true)
+	if not i then return end
 	local target = strsub(msg, j+1, i-1)
 	
 	i,j = strfind(ability, "(", 1, true)

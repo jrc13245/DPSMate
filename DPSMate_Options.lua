@@ -507,7 +507,6 @@ function DPSMate.Options:InitializeConfigMenu()
 		_G("DPSMate_ConfigMenu_Tab_Columns_Child_EffectiveHealing_Check"..i):SetChecked(DPSMateSettings["columnsehealing"][i])
 		_G("DPSMate_ConfigMenu_Tab_Columns_Child_EffectiveHealingTaken_Check"..i):SetChecked(DPSMateSettings["columnsehealingtaken"][i])
 		_G("DPSMate_ConfigMenu_Tab_Columns_Child_EffectiveHPS_Check"..i):SetChecked(DPSMateSettings["columnsehps"][i])
-		_G("DPSMate_ConfigMenu_Tab_Columns_Child_EffectiveHPS_Check"..i):SetChecked(DPSMateSettings["columnsehps"][i])
 		_G("DPSMate_ConfigMenu_Tab_Columns_Child_HAB_Check"..i):SetChecked(DPSMateSettings["columnshab"][i])
 		_G("DPSMate_ConfigMenu_Tab_Columns_Child_FriendlyFire_Check"..i):SetChecked(DPSMateSettings["columnsfriendlyfire"][i])
 		_G("DPSMate_ConfigMenu_Tab_Columns_Child_Threat_Check"..i):SetChecked(DPSMateSettings["columnsthreat"][i])
@@ -1459,7 +1458,7 @@ function DPSMate.Options:Report()
 	local channel = UIDropDownMenu_GetSelectedValue(DPSMate_Report_Channel)
 	SelectedChannel = channel
 	local arr, cbt, ecbt = DPSMate:GetMode(DPSMate_Report.PaKey)
-	local chn, index, name, value, perc = nil, nil, nil, nil, nil
+	local chn, index, name, value, perc, b = nil, nil, nil, nil, nil, nil
 	name, value, perc, b = DPSMate:GetSettingValues(arr, cbt, DPSMate_Report.PaKey, ecbt)
 	if (channel == DPSMate.L["whisper"]) then
 		chn = "WHISPER"; index = DPSMate_Report_Editbox:GetText();
@@ -1994,6 +1993,9 @@ function DPSMate.Options:RemoveSegment(i)
 	for cat, val in DPSMateHistory do
 		tremove(DPSMateHistory[cat], i)
 	end
+	if DPSMateCombatTime["segments"][i] then
+		tremove(DPSMateCombatTime["segments"], i)
+	end
 	DPSMate.Options:InitializeSegments()
 	DPSMate.Options.Dewdrop:Close()
 end
@@ -2093,7 +2095,7 @@ end
 function DPSMate.Options:OpenColorPicker(obj, var, func)
 	CloseMenus()
 	
-	button = _G(obj:GetName().."_SwatchBg")
+	local button = _G(obj:GetName().."_SwatchBg")
 	
 	ColorPickerFrame.obj = obj
 	ColorPickerFrame.var = var

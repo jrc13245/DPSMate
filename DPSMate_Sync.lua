@@ -258,7 +258,7 @@ function DPSMate.Sync:VoteSuccess(key)
 	end
 	DPSMate.DB.MainUpdate = 75
 	self.Async, iterator, time = false, 1, 0
-	UpTime = -5
+	local UpTime = -5
 	Buffer = {}
 	co, cou = 1, 1
 	Arrays = {
@@ -343,7 +343,8 @@ function DPSMate.Sync:ReceiveGreet(arg2, arg4)
 		am = am + 1
 	else
 		if (GetTime()-old)>=3 then
-			local ver = tnbr(strsub(arg2, strfind(arg2, "%d+")) or 0)
+			local s = strfind(arg2, "%d+")
+			local ver = s and tnbr(strsub(arg2, s)) or 0
 			if ver>DPSMate.VERSION then
 				DPSMate:SendMessage(DPSMate.L["versionisold"])
 				old = GetTime()
@@ -1420,7 +1421,7 @@ function DPSMate.Sync:AurasOut()
 	local p = 0
 	local ability
 	for cat, val in pairs(DPSMateAurasGained[1][pid]) do -- ability
-		if val[4] then p = 1 end
+		p = val[4] and 1 or 0
 		ability = DPSMate:GetAbilityById(cat)
 		Buffer[cou] = {"DPSMate_AurasAll", ability..","..p..","..val[5]..","..val[6]..","}
 		cou = cou + 1
@@ -1541,6 +1542,7 @@ function DPSMate.Sync:ThreatStatsIn(arg2,arg4)
 		return
 	end
 	t[3] = tnbr(t[3])
+	if not Arrays[16][piid][usid][abid] then return end
 	Arrays[16][piid][usid][abid]["i"][t[3]] = tnbr(t[4])
 	if t[3]>DPSMateCombatTime["total"] then DPSMateCombatTime["total"]=t[3] end
 end

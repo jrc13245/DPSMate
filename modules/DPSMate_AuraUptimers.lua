@@ -67,6 +67,7 @@ function DPSMate.Modules.AurasUptimers:EvalTable(user, k)
 	if cbt>1 then
 		cbt = cbt - 1;
 	end
+	if not arr[user[1]] then return {}, 0, {} end
 	for cat, val in pairs(arr[user[1]]) do -- 3 Ability
 		-- path[7] holds pre-computed uptime (seconds) collapsed from previous sessions.
 		-- path[1]/path[2] hold this session's gain/loss timestamps (may be empty after collapse).

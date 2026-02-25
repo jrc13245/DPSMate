@@ -60,7 +60,7 @@ function DPSMate.Modules.FriendlyFireTaken:EvalTable(user, k)
 		local cName = DPSMate:GetUserById(c)
 		local CV = 0
 		local aa,bb = {}, {}
-		if DPSMateUser[cName][3] == user[3] and DPSMateUser[cName][3] then
+		if DPSMateUser[cName] and DPSMateUser[cName][3] == user[3] and DPSMateUser[cName][3] then
 			for cat, val in v do
 				if cat~="i" then 
 					local i = 1

@@ -793,7 +793,7 @@ function DPSMate:ApplyFilter(key, name)
 		end
 	end
 
-	if path["filterpeople"] ~= "" then
+	if path["filterpeople"] and path["filterpeople"] ~= "" then
 		-- Certain people
 		t = {}
 		strgsub(path["filterpeople"]..",", "(.-),", func)

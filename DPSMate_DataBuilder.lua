@@ -900,14 +900,22 @@ function DPSMate.DB:OnGroupUpdate()
 			local fac = UnitFactionGroup(type..i)
 			local gname, _, _ = GetGuildInfo(type..i)
 			local level = UL(type..i)
-			self:BuildUser(name, strlower(classEng or ""))
+			if not DPSMateUser[name] then
+				self.userlen = self.userlen + 1
+				DPSMateUser[name] = {[1] = self.userlen}
+				DPSMate.UserId = nil
+			end
 			if classEng then
 				DPSMateUser[name][2] = strlower(classEng)
 			end
 			DPSMateUser[name][4] = false
 			DPSMateUser[name][6] = nil
 			if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
-				self:BuildUser(pet)
+				if not DPSMateUser[pet] then
+					self.userlen = self.userlen + 1
+					DPSMateUser[pet] = {[1] = self.userlen}
+					DPSMate.UserId = nil
+				end
 				DPSMateUser[pet][4] = true
 				DPSMateUser[name][5] = pet
 				DPSMateUser[pet][6] = DPSMateUser[name][1]
@@ -931,9 +939,17 @@ function DPSMate.DB:OnGroupUpdate()
 	end
 	local pet = UnitName("pet")
 	local name = UnitName("player")
-	self:BuildUser(name, nil)
+	if not DPSMateUser[name] then
+		self.userlen = self.userlen + 1
+		DPSMateUser[name] = {[1] = self.userlen}
+		DPSMate.UserId = nil
+	end
 	if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
-		self:BuildUser(pet, nil)
+		if not DPSMateUser[pet] then
+			self.userlen = self.userlen + 1
+			DPSMateUser[pet] = {[1] = self.userlen}
+			DPSMate.UserId = nil
+		end
 		DPSMateUser[pet][4] = true
 		DPSMateUser[name][5] = pet
 		DPSMateUser[pet][6] = DPSMateUser[name][1]
@@ -1184,6 +1200,7 @@ local spellSchoolNames = {
 }
 local sc
 function DPSMate.DB:AddSpellSchool(ab, school)
+	if not school then return end
 	school = strlower(school)
 	if spellSchoolNames[school] then
 		if DPSAbility[ab] then
@@ -1737,7 +1754,7 @@ end
 function DPSMate.DB:GetAbsorbingShield(ability, abilityTarget, cate)
 	local AbsorbingAbility = {}	
 	local activeShields = {}
-	if DPSAbsorb[cate][abilityTarget] then
+	if DPSAbsorb[cate] and DPSAbsorb[cate][abilityTarget] then
 		for cat, val in pairs(DPSAbsorb[cate][abilityTarget]) do
 			for ca, va in pairs(val) do
 				if ca~="i" then
@@ -1787,7 +1804,7 @@ function DPSMate.DB:GetAbsorbingShield(ability, abilityTarget, cate)
 					end
 				end
 			else
-				if AAS then
+				if next(AAS) ~= nil then
 					for cat, val in pairs(AAS) do
 						return {cat, val[1],val[2]}
 					end
@@ -1814,7 +1831,12 @@ function DPSMate.DB:Absorb(ability, abilityTarget, incTarget)
 		if not abilityEntry then break end
 		AbsorbingAbility = self:GetAbsorbingShield(abilityEntry[3], abilityTarget, cat)
 		if AbsorbingAbility[1] then
-			if not (DPSAbsorb[cat] and DPSAbsorb[cat][abilityTarget] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]] and DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget]) then
+			if not DPSAbsorb[cat] then DPSAbsorb[cat] = {} end
+			if not DPSAbsorb[cat][abilityTarget] then DPSAbsorb[cat][abilityTarget] = {} end
+			if not DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]] then DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]] = {["i"]={}} end
+			if not DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]] then DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]] = {} end
+			if not DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]] then DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]] = {} end
+			if not DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget] then
 				DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget] = {}
 			end
 			path = DPSAbsorb[cat][abilityTarget][AbsorbingAbility[1]][AbsorbingAbility[2]][AbsorbingAbility[3]][incTarget]
@@ -2044,10 +2066,10 @@ function DPSMate.DB:UnregisterDeath(target)
 	target = self:BuildUser(target)
 	local p
 	for cat, val in pairs(tablemodes) do 
-		if DPSDeath[cat][target] then
+		if DPSDeath[cat][target] and DPSDeath[cat][target][1] then
 			DPSDeath[cat][target][1]["i"][1]=1
 			DPSDeath[cat][target][1]["i"][2]=GameTime_GT()
-			if cat==1 and DPSMate.Parser.TargetParty[DPSMate:GetUserById(target)] then 
+			if cat==1 and DPSMate.Parser.TargetParty[DPSMate:GetUserById(target)] and DPSDeath[cat][target][1][1] then
 				p = DPSDeath[cat][target][1][1]
 				DPSMate:Broadcast(4, DPSMate:GetUserById(target), DPSMate:GetUserById(p[1]), DPSMate:GetAbilityById(p[2]), p[3]) 
 			end
@@ -2306,9 +2328,11 @@ function DPSMate.DB:UpdatePlayerCBT(cbt)
 	for i=1, num do
 		if UnitAffectingCombat(type..i) or UnitAffectingCombat(type.."pet"..i) then
 			name = UnitName(type..i)
-			cbt1[name] = (cbt1 and cbt1[name] or 0) + cbt
-			cbt2[name] = (cbt2 and cbt2[name] or 0) + cbt
-			notInCombat = false
+			if name then
+				cbt1[name] = (cbt1[name] or 0) + cbt
+				cbt2[name] = (cbt2[name] or 0) + cbt
+				notInCombat = false
+			end
 		end
 	end
 	return notInCombat

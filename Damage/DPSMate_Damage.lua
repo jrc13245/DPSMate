@@ -250,14 +250,16 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 		for i=1, DPSMateSettings["subviewrows"] do
 			if not a[i] then break end
 			if not c[i][2] then
-				GameTooltip:AddDoubleLine(i..". "..DPSMate:GetAbilityById(a[i]),c[i][1].." ("..strformat("%.2f", 100*c[i][1]/(b-pet)).."%)",1,1,1,1,1,1)
+				local div = (b-pet) ~= 0 and (b-pet) or 1
+				GameTooltip:AddDoubleLine(i..". "..DPSMate:GetAbilityById(a[i]),c[i][1].." ("..strformat("%.2f", 100*c[i][1]/div).."%)",1,1,1,1,1,1)
 			end
 		end
 
 		GameTooltip:AddLine(DPSMate.L["tttop"]..DPSMateSettings["subviewrows"]..DPSMate.L["ttattacked"])
 		for i=1, DPSMateSettings["subviewrows"] do
 			if not edtaken[i] then break end
-			GameTooltip:AddDoubleLine(i..". "..DPSMate:GetUserById(edtaken[i][1]), edtaken[i][2].." ("..strformat("%.2f", 100*edtaken[i][2]/(b-pet)).."%)", 1,1,1,1,1,1)
+			local ediv = (b-pet) ~= 0 and (b-pet) or 1
+			GameTooltip:AddDoubleLine(i..". "..DPSMate:GetUserById(edtaken[i][1]), edtaken[i][2].." ("..strformat("%.2f", 100*edtaken[i][2]/ediv).."%)", 1,1,1,1,1,1)
 		end
 
 		if pet~=0 and getn(petIds) > 0 then
