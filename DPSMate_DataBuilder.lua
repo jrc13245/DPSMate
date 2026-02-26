@@ -1061,6 +1061,7 @@ function DPSMate.DB:Threat(cause, spellname, target, value, amount)
 	cause = self:BuildUser(cause)
 	spellname = self:BuildAbility(spellname)
 	for cat, val in pairs(tablemodes) do
+		if not DPSThreat[cat] then DPSThreat[cat] = {} end
 		if not DPSThreat[cat][cause] then
 			DPSThreat[cat][cause] = {}
 		end
@@ -1241,7 +1242,8 @@ function DPSMate.DB:DamageDone(Duser, Dname, Dhit, Dcrit, Dmiss, Dparry, Ddodge,
 	
 	Dname = self:BuildAbility(Dname)
 	
-	for cat=1,2 do 
+	for cat=1,2 do
+		if not DPSDMG[cat] then DPSDMG[cat] = {} end
 		gen = DPSDMG[cat]
 		if not gen[Duser] then gen[Duser] = {i=0} end
 		gen = gen[Duser]
@@ -1518,7 +1520,8 @@ function DPSMate.DB:Healing(mode, arr, Duser, Dname, Dhit, Dcrit, Damount)
 	elseif mode == 1 then arr = DPSHeal
 	else arr = DPSOHeal end
 	
-	for cat=1,2 do 
+	for cat=1,2 do
+		if not arr[cat] then arr[cat] = {} end
 		gen = arr[cat]
 		if not gen[Duser] then gen[Duser] = {i = 0} end
 		gen = gen[Duser]
@@ -1577,7 +1580,8 @@ function DPSMate.DB:HealingTaken(mode, arr, Duser, Dname, Dhit, Dcrit, Damount, 
 	elseif mode == 1 then arr = DPSEHealTaken
 	else arr = DPSOHealTaken end
 	
-	for cat=1,2 do 
+	for cat=1,2 do
+		if not arr[cat] then arr[cat] = {} end
 		gen = arr[cat]
 		if not gen[Duser] then gen[Duser] = {i = 0} end
 		gen = gen[Duser]
@@ -2030,7 +2034,8 @@ function DPSMate.DB:Dispels(cause, Dname, target, ability)
 	target = self:BuildUser(target)
 	Dname = self:BuildAbility(Dname)
 	ability = self:BuildAbility(ability)
-	for cat, val in pairs(tablemodes) do 
+	for cat, val in pairs(tablemodes) do
+		if not DPSDispel[cat] then DPSDispel[cat] = {} end
 		if not DPSDispel[cat][cause] then
 			DPSDispel[cat][cause] = {
 				i = {
@@ -2065,8 +2070,8 @@ function DPSMate.DB:UnregisterDeath(target)
 	if strfind(target, "%s") then return end
 	target = self:BuildUser(target)
 	local p
-	for cat, val in pairs(tablemodes) do 
-		if DPSDeath[cat][target] and DPSDeath[cat][target][1] then
+	for cat, val in pairs(tablemodes) do
+		if DPSDeath[cat] and DPSDeath[cat][target] and DPSDeath[cat][target][1] then
 			DPSDeath[cat][target][1]["i"][1]=1
 			DPSDeath[cat][target][1]["i"][2]=GameTime_GT()
 			if cat==1 and DPSMate.Parser.TargetParty[DPSMate:GetUserById(target)] and DPSDeath[cat][target][1][1] then
@@ -2180,7 +2185,8 @@ function DPSMate.DB:Kick(cause, target, causeAbility, targetAbility)
 	cause = self:BuildUser(cause)
 	causeAbility = self:BuildAbility(causeAbility)
 	targetAbility = self:BuildAbility(targetAbility)
-	for cat, val in pairs(tablemodes) do 
+	for cat, val in pairs(tablemodes) do
+		if not DPSInterrupt[cat] then DPSInterrupt[cat] = {} end
 		if not DPSInterrupt[cat][cause] then
 			DPSInterrupt[cat][cause] = {
 				i = {
@@ -2239,6 +2245,7 @@ function DPSMate.DB:BuildBuffs(cause, target, ability, bool)
 	cause = self:BuildUser(cause)
 	ability = self:BuildAbility(ability)
 	for cat, val in pairs(tablemodes) do
+		if not DPSAurasGained[cat] then DPSAurasGained[cat] = {} end
 		if not DPSAurasGained[cat][target] then
 			DPSAurasGained[cat][target] = {}
 		end
@@ -2275,6 +2282,7 @@ function DPSMate.DB:DestroyBuffs(target, ability)
 	ability = self:BuildAbility(ability)
 	local TL
 	for cat, val in pairs(tablemodes) do
+		if not DPSAurasGained[cat] then DPSAurasGained[cat] = {} end
 		if not DPSAurasGained[cat][target] then
 			DPSAurasGained[cat][target] = {}
 		end
@@ -2476,6 +2484,7 @@ function DPSMate.DB:BuildFail(type, user, cause, ability, amount)
 	ability = self:BuildAbility(ability)
 	local time = GameTime_GT()
 	for cat, val in pairs(tablemodes) do
+		if not DPSFail[cat] then DPSFail[cat] = {} end
 		if not DPSFail[cat][cause] then
 			DPSFail[cat][cause] = {}
 		end
@@ -2531,6 +2540,7 @@ function DPSMate.DB:CCBreaker(target, ability, cause)
 	cause = self:BuildUser(cause)
 	target = self:BuildUser(target)
 	for cat=1,2 do
+		if not DPSCCBreaker[cat] then DPSCCBreaker[cat] = {} end
 		if not DPSCCBreaker[cat][cause] then
 			DPSCCBreaker[cat][cause] = {}
 		end
