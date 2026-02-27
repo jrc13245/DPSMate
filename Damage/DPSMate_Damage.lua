@@ -126,7 +126,7 @@ function DPSMate.Modules.Damage:EvalTable(user, k)
 		if arr[v] then
 			for cat, val in pairs(arr[v]) do
 				if (type(val) == "table" and cat~="i") then
-					if val[13]~=0 and cat~="" then
+					if val[13] and val[13]~=0 and cat~="" then
 						local vname = DPSMate:GetUserById(v)
 						if vname and DPSMateUser[vname] and DPSMateUser[vname][4] then pet=vname; else pet=false; end
 						local i = 1
@@ -147,7 +147,7 @@ function DPSMate.Modules.Damage:EvalTable(user, k)
 					end
 				end
 			end
-			total=total+arr[v]["i"]
+			total=total+(arr[v]["i"] or 0)
 		end
 	end
 	return a, total, d
@@ -225,7 +225,7 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 			-- Aggregate EDT from all pets for this enemy
 			local petTotal = 0
 			for _, pid in pairs(petIds) do
-				if val[pid] and val[pid]["i"] > 0 then
+				if val[pid] and (val[pid]["i"] or 0) > 0 then
 					petTotal = petTotal + val[pid]["i"]
 				end
 			end

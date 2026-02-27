@@ -91,7 +91,7 @@ function DPSMate.Modules.HealingAndAbsorbs:GetSortedTable(arr, k)
 												p = DPSMate.DB.FixedShieldAmounts[shieldname]
 											end
 											if p==5 or p==0 then
-												p = ceil((1/totalHits)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
+												p = ceil((1/totalHits)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
 											end
 											PerShieldAbsorb=PerShieldAbsorb+ss*p
 										end
@@ -121,8 +121,8 @@ function DPSMate.Modules.HealingAndAbsorbs:GetSortedTable(arr, k)
 		local arr = DPSMate:GetModeByArr(DPSMateEHealing, k, "EHealing")
 		for c, v in pairs(arr) do
 			if DPSMate:ApplyFilter(k, DPSMate:GetUserById(c)) then
-				d[c] = v["i"]
-				total2 = total2 + v["i"]
+				d[c] = (v["i"] or 0)
+				total2 = total2 + (v["i"] or 0)
 			end
 		end
 		
@@ -204,7 +204,7 @@ function DPSMate.Modules.HealingAndAbsorbs:EvalTable(user, k)
 											p = DPSMate.DB.FixedShieldAmounts[shieldname]
 										end
 										if p==5 or p==0 then
-											p = ceil((1/totalHits)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
+											p = ceil((1/totalHits)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
 										end
 										PerShieldAbsorb=PerShieldAbsorb+ss*p
 										if not temp[cet] then temp[cet] = {} end

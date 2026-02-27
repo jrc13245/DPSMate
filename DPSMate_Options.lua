@@ -1671,7 +1671,7 @@ function DPSMate.Options:NewSegment(segname)
 		local CV = 0
 		for cat, val in pairs(v) do
 			if cat~="i" then
-				CV = CV+val["i"]
+				CV = CV+(val["i"] or 0)
 			end
 		end
 		if max<CV then

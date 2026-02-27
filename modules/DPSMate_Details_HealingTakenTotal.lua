@@ -281,8 +281,8 @@ function DPSMate.Modules.DetailsHealingTakenTotal:GetTableValues()
 						end
 					end
 				end
-				tinsert(arr, {name, val["i"], crit, miss, time, totCrit, totMiss, cat})
-				total = total + val["i"]
+				tinsert(arr, {name, (val["i"] or 0), crit, miss, time, totCrit, totMiss, cat})
+				total = total + (val["i"] or 0)
 			end
 		end
 	end

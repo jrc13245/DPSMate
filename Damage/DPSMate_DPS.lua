@@ -129,7 +129,7 @@ function DPSMate.Modules.DPS:EvalTable(user, k, cbt)
 		if arr[v] then
 			for cat, val in pairs(arr[v]) do
 				if (type(val) == "table" and cat~="i") then
-					if val[13]~=0 and cat~="" then
+					if val[13] and val[13]~=0 and cat~="" then
 						local vname = DPSMate:GetUserById(v)
 						if vname and DPSMateUser[vname] and DPSMateUser[vname][4] then pet=vname; else pet=false; end
 						local i = 1
@@ -150,7 +150,7 @@ function DPSMate.Modules.DPS:EvalTable(user, k, cbt)
 					end
 				end
 			end
-			total=total+arr[v]["i"]
+			total=total+(arr[v]["i"] or 0)
 		end
 	end
 	return a, total/(cbt or 1), d

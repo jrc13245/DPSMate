@@ -192,6 +192,7 @@ end
 
 function DPSMate.Modules.DetailsProcs:GetSpecialSnowFlakeHits(ability, cname)
 	local num = 0;
+	if not DPSMateUser[cname or DetailsUser] then return 0 end
 	if self.specialSnowflakes[ability] then
 		for cat, val in DPSMateDamageDone[1][DPSMateUser[cname or DetailsUser][1]] do
 			if cat~="i" then

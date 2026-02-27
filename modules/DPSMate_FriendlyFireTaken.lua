@@ -25,7 +25,7 @@ function DPSMate.Modules.FriendlyFireTaken:GetSortedTable(arr,k)
 			local catName = DPSMate:GetUserById(cat)
 			if DPSMate:ApplyFilter(k, catName) and DPSMateUser[catName] and DPSMateUser[cName] then
 				if DPSMateUser[cName][3] == DPSMateUser[catName][3] and DPSMateUser[catName][3] and DPSMateUser[cName][3] then
-					CV = CV + val["i"]
+					CV = CV + (val["i"] or 0)
 				end
 			end
 		end
@@ -66,19 +66,19 @@ function DPSMate.Modules.FriendlyFireTaken:EvalTable(user, k)
 					local i = 1
 					while true do
 						if (not bb[i]) then
-							tinsert(bb, i, val[13])
+							tinsert(bb, i, (val[13] or 0))
 							tinsert(aa, i, cat)
 							break
 						else
-							if bb[i] < val[13] then
-								tinsert(bb, i, val[13])
+							if bb[i] < (val[13] or 0) then
+								tinsert(bb, i, (val[13] or 0))
 								tinsert(aa, i, cat)
 								break
 							end
 						end
 						i=i+1
 					end
-					CV = CV + val[13]
+					CV = CV + (val[13] or 0)
 				end
 			end
 		end

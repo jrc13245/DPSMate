@@ -51,19 +51,19 @@ function DPSMate.Modules.Dispels:GetSortedTable(arr,k)
 			local i = 1
 			while true do
 				if (not b[i]) then
-					tinsert(b, i, val["i"][1])
+					tinsert(b, i, (val["i"] and val["i"][1] or 0))
 					tinsert(a, i, cat)
 					break
 				else
-					if b[i] < val["i"][1] then
-						tinsert(b, i, val["i"][1])
+					if b[i] < (val["i"] and val["i"][1] or 0) then
+						tinsert(b, i, (val["i"] and val["i"][1] or 0))
 						tinsert(a, i, cat)
 						break
 					end
 				end
 				i=i+1
 			end
-			total = total + val["i"][1]
+			total = total + (val["i"] and val["i"][1] or 0)
 		end
 	end
 	return b, total, a
@@ -99,7 +99,7 @@ function DPSMate.Modules.Dispels:EvalTable(user, k)
 			end
 		end
 	end
-	return a, arr[user[1]]["i"][1], b
+	return a, (arr[user[1]]["i"] and arr[user[1]]["i"][1] or 0), b
 end
 
 function DPSMate.Modules.Dispels:GetSettingValues(arr, cbt, k)

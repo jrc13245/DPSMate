@@ -247,7 +247,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:EvalToggleTable(cname)
 										p = DPSMate.DB.FixedShieldAmounts[shieldname]
 									end
 									if p==5 or p==0 then
-										p = ceil((1/totalHits)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
+										p = ceil((1/totalHits)*(((DPSMateUser[cname or DetailsUser] and DPSMateUser[cname or DetailsUser][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
 									end
 									PerShieldAbsorb=PerShieldAbsorb+ss*p
 								end
@@ -474,7 +474,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:SelectDetails_HealingAndAbsorb
 												p = DPSMate.DB.FixedShieldAmounts[abString]
 											end
 											if p==5 or dmg==0 then
-												p = ceil((1/totalHits)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[abString]*0.33)
+												p = ceil((1/totalHits)*(((DPSMateUser[cname or DetailsUser] and DPSMateUser[cname or DetailsUser][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[abString]*0.33)
 											end
 											PerShieldAbsorb=PerShieldAbsorb+ss*p
 											
@@ -547,7 +547,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:Player_Update(comp)
 		lineplusoffset = line + FauxScrollFrame_GetOffset(obj)
 		if d1[lineplusoffset] ~= nil then
 			local user = DPSMate:GetUserById(d1[lineplusoffset])
-			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user][2])
+			local r,g,b,img = DPSMate:GetClassColor(DPSMateUser[user] and DPSMateUser[user][2])
 			_G(path.."_ScrollButton"..line.."_Name"):SetText(user)
 			_G(path.."_ScrollButton"..line.."_Name"):SetTextColor(r,g,b)
 			_G(path.."_ScrollButton"..line.."_Value"):SetText(d2[lineplusoffset][1].." ("..strformat("%.2f", (d2[lineplusoffset][1]*100/d3)).."%)")
@@ -790,7 +790,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:UpdateStackedGraph(gg, comp, c
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((DPSMateUser[cname or DetailsUser] and DPSMateUser[cname or DetailsUser][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -892,7 +892,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:UpdateStackedGraph(gg, comp, c
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((DPSMateUser[cname or DetailsUser] and DPSMateUser[cname or DetailsUser][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -1052,7 +1052,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:SortLineTable(arr, b, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((DPSMateUser[cname or DetailsUser] and DPSMateUser[cname or DetailsUser][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]
@@ -1112,7 +1112,7 @@ function DPSMate.Modules.DetailsHealingAndAbsorbs:SortLineTable(arr, b, cname)
 						end
 					end
 					if dmg==5 or dmg==0 then
-						dmg = ceil((1/15)*((DPSMateUser[cname or DetailsUser][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
+						dmg = ceil((1/15)*(((DPSMateUser[cname or DetailsUser] and DPSMateUser[cname or DetailsUser][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[DPSMate:GetAbilityById(va[5])]*0.33)
 					end
 					if va[4] then
 						dmg = dmg + va[4]

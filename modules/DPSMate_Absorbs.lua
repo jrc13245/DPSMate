@@ -79,7 +79,7 @@ function DPSMate.Modules.Absorbs:GetSortedTable(arr,k)
 											p = DPSMate.DB.FixedShieldAmounts[shieldname]
 										end
 										if p==5 or p==0 then
-											p = ceil((1/totalHits)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
+											p = ceil((1/totalHits)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
 										end
 										PerShieldAbsorb=PerShieldAbsorb+ss*p
 									end
@@ -163,7 +163,7 @@ function DPSMate.Modules.Absorbs:EvalTable(user, k)
 											p = DPSMate.DB.FixedShieldAmounts[shieldname]
 										end
 										if p==5 or p==0 then
-											p = ceil((1/totalHits)*((DPSMateUser[ownername][8] or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
+											p = ceil((1/totalHits)*(((DPSMateUser[ownername] and DPSMateUser[ownername][8]) or 60)/60)*DPSMate.DB.FixedShieldAmounts[shieldname]*0.33)
 										end
 										PerShieldAbsorb=PerShieldAbsorb+ss*p
 										if not temp[cet] then temp[cet] = {} end

@@ -63,11 +63,11 @@ function DPSMate.Modules.Interrupts:GetSortedTable(arr,k)
 			-- skip unknown users
 		elseif (not DPSMateUser[name][4] or (DPSMateUser[name][4] and not DPSMateSettings["mergepets"])) then
 			if DPSMate:ApplyFilter(k, name) then
-				local CV = val["i"][1]
+				local CV = (val["i"] and val["i"][1] or 0)
 				if DPSMateSettings["mergepets"] and petsByOwner[cat] then
 					for _, petCat in pairs(petsByOwner[cat]) do
 						if arr[petCat] then
-							CV = CV + arr[petCat]["i"][1]
+							CV = CV + (arr[petCat]["i"] and arr[petCat]["i"][1] or 0)
 						end
 					end
 				end
@@ -156,7 +156,7 @@ function DPSMate.Modules.Interrupts:EvalTable(user, k)
 				end
 			end
 		end
-		total = total + arr[vvv]["i"][1]
+		total = total + (arr[vvv]["i"] and arr[vvv]["i"][1] or 0)
 	end
 	return a, total, b
 end
@@ -262,7 +262,7 @@ function DPSMate.Modules.Interrupts:ShowTooltip(user,k)
 			GameTooltip:AddDoubleLine(i..". "..DPSMate:GetUserById(abn[i][1]), abn[i][2].." ("..strformat("%.2f", 100*abn[i][2]/(b-pet)).."%)", 1,1,1,1,1,1)
 		end
 		
-		if pet~=0 and DPSMateUser[user][5] then
+		if pet~=0 and DPSMateUser[user] and DPSMateUser[user][5] then
 			GameTooltip:AddLine(" ")
 			GameTooltip:AddDoubleLine(DPSMate.L["ttpet2"],DPSMateUser[user][5].."<"..user.."> ("..strformat("%.2f", 100*pet/b).."%)",1,0.82,0,1,1,1)
 			GameTooltip:AddLine(DPSMate.L["tttop"]..DPSMateSettings["subviewrows"]..DPSMate.L["ttpet"]..DPSMate.L["ttinterrupt"]..DPSMate.L["ttabilities"])

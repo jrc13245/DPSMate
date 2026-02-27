@@ -190,7 +190,7 @@ function DPSMate.Modules.DetailsDamage:EvalToggleTable(comp)
 							tinsert(c[2], i, p)
 							break
 						else
-							if c[3][i][13] < v[13] then
+							if (c[3][i][13] or 0) < (v[13] or 0) then
 								tinsert(c[3], i, v)
 								tinsert(c[2], i, p)
 								break
@@ -200,7 +200,7 @@ function DPSMate.Modules.DetailsDamage:EvalToggleTable(comp)
 					end
 				end
 			end
-			c[1] = val[uid[1]]["i"]
+			c[1] = val[uid[1]]["i"] or 0
 			-- pet
 			if DPSMateSettings["mergepets"] then
 				for pName, pEntry in pairs(DPSMateUser) do
@@ -214,7 +214,7 @@ function DPSMate.Modules.DetailsDamage:EvalToggleTable(comp)
 										tinsert(c[2], i, p)
 										break
 									else
-										if c[3][i][13] < v[13] then
+										if (c[3][i][13] or 0) < (v[13] or 0) then
 											tinsert(c[3], i, v)
 											tinsert(c[2], i, p)
 											break
@@ -577,7 +577,7 @@ function DPSMate.Modules.DetailsDamage:UpdatePie(gg, cname)
 			end
 		end
 		if db[user] and db[user][val] then
-			local percent = (db[user][val][13]*100/dTot)
+			local percent = ((db[user][val][13] or 0)*100/(dTot > 0 and dTot or 1))
 			gg:AddPie(percent, 0, DPSMate:GetAbilityById(val))
 		end
 	end

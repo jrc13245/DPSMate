@@ -34,7 +34,7 @@ local strformat = string.format
 function DPSMate.Modules.DamageTaken:GetSortedTable(arr,k)
 	local b, a, total = {}, {}, 0
 	for c, v in pairs(arr) do
-		if DPSMate:ApplyFilter(k, DPSMate:GetUserById(c)) then
+		if DPSMate:ApplyFilter(k, DPSMate:GetUserById(c)) and v["i"] then
 			local i = 1
 			while true do
 				if (not b[i]) then
@@ -66,17 +66,17 @@ function DPSMate.Modules.DamageTaken:EvalTable(user, k)
 			local ta, tb, CV = {}, {}, 0
 			for ca, va in pairs(val) do
 				if ca~="i" then
-					CV = CV + va[13]
+					CV = CV + (va[13] or 0)
 					local i = 1
 					while true do
 						if (not tb[i]) then
 							tinsert(ta, i, ca)
-							tinsert(tb, i, va[13])
+							tinsert(tb, i, (va[13] or 0))
 							break
 						else
-							if (tb[i] < va[13]) then
+							if (tb[i] < (va[13] or 0)) then
 								tinsert(ta, i, ca)
-								tinsert(tb, i, va[13])
+								tinsert(tb, i, (va[13] or 0))
 								break
 							end
 						end
@@ -101,7 +101,7 @@ function DPSMate.Modules.DamageTaken:EvalTable(user, k)
 			end
 		end
 	end
-	return a, arr[user[1]]["i"], d
+	return a, (arr[user[1]]["i"] or 0), d
 end
 
 function DPSMate.Modules.DamageTaken:GetSettingValues(arr, cbt, k,ecbt)

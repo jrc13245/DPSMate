@@ -30,7 +30,7 @@ local strformat = string.format
 function DPSMate.Modules.Overhealing:GetSortedTable(arr,k)
 	local b, a, total = {}, {}, 0
 	for c, v in pairs(arr) do
-		if DPSMate:ApplyFilter(k, DPSMate:GetUserById(c)) then
+		if DPSMate:ApplyFilter(k, DPSMate:GetUserById(c)) and v["i"] then
 			local i = 1
 			while true do
 				if (not b[i]) then
@@ -76,7 +76,7 @@ function DPSMate.Modules.Overhealing:EvalTable(user, k)
 			end
 		end
 	end
-	return a, arr[user[1]]["i"], d
+	return a, (arr[user[1]]["i"] or 0), d
 end
 
 function DPSMate.Modules.Overhealing:GetSettingValues(arr, cbt, k,ecbt)
