@@ -789,4 +789,12 @@ DPSMate.Parser.CHAT_MSG_SPELL_PET_DAMAGE = function(arg1)
 	this:PetSpellDamage(arg1)
 end
 
-DPSMate.Parser:SetScript("OnEvent", function() if this[event] then this[event](arg1) end end)
+DPSMate.Parser:SetScript("OnEvent", function()
+	if this[event] then
+		local msg = arg1
+		if msg and strfind(event, "CHAT_MSG_", 1, true) and not strfind(msg, " 's ", 1, true) and strfind(msg, "'s ", 1, true) then
+			msg = string.gsub(msg, "'s ", " 's ", 1)
+		end
+		this[event](msg)
+	end
+end)
