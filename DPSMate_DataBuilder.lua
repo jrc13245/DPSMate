@@ -2357,6 +2357,7 @@ local notInCombat, cbtpt
 local init=true
 local initTime = 0
 function DPSMate.DB:OnUpdate()
+	if not self.loaded then return end
 	-- Delayed roster retry (handles UnitName returning nil right when PARTY_MEMBERS_CHANGED fires)
 	-- Clear the timer BEFORE calling OnGroupUpdate so that OnGroupUpdate can re-set it
 	-- if it still finds nil-name slots (keeps retrying until all names resolve).
@@ -2368,10 +2369,12 @@ function DPSMate.DB:OnUpdate()
 		notInCombat = false
 		LastUpdate = LastUpdate + arg1
 		if LastUpdate>=(DPSMateSettings["mainupdatetime"] or 1.5) then
+			if not DPSCBT then return end
 			cbtpt = DPSCBT["effective"]
 			DPSCBT["total"] = (DPSCBT["total"] and DPSCBT["total"] or 0 )+ LastUpdate
 			DPSCBT["current"] = (DPSCBT["current"] and DPSCBT["current"] or 0 )+ LastUpdate
-			
+
+			if not CBTCache then CBTCache = {0, 0} end
 			CBTCache[1] = floor(DPSCBT["total"])
 			CBTCache[2] = floor(DPSCBT["current"])
 			

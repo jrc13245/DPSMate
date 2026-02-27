@@ -1351,11 +1351,11 @@ end
 
 function DPSMate.Options:DataResetsDropDown()
 	local btns = {DPSMate.L["yes"], DPSMate.L["no"], DPSMate.L["ask"]}
-	
+
 	local function on_click()
 		DPSMate.Options:SelectDataResets(_G(UIDROPDOWNMENU_OPEN_MENU), this.value)
 	end
-	
+
 	for val, name in pairs(btns) do
 		UIDropDownMenu_AddButton{
 			text = name,
@@ -1363,16 +1363,22 @@ function DPSMate.Options:DataResetsDropDown()
 			func = on_click,
 		}
 	end
-	
-	if not DPSMate_ConfigMenu.visBars8 then
-		UIDropDownMenu_SetSelectedValue(DPSMate_ConfigMenu_Tab_DataResets_EnteringWorld, DPSMateSettings["dataresetsworld"])
-		UIDropDownMenu_SetSelectedValue(DPSMate_ConfigMenu_Tab_DataResets_JoinParty, DPSMateSettings["dataresetsjoinparty"])
-		UIDropDownMenu_SetSelectedValue(DPSMate_ConfigMenu_Tab_DataResets_PartyMemberChanged, DPSMateSettings["dataresetspartyamount"])
-		UIDropDownMenu_SetSelectedValue(DPSMate_ConfigMenu_Tab_DataResets_LeaveParty, DPSMateSettings["dataresetsleaveparty"])
-		UIDropDownMenu_SetSelectedValue(DPSMate_ConfigMenu_Tab_DataResets_Sync, DPSMateSettings["dataresetssync"])
-		UIDropDownMenu_SetSelectedValue(DPSMate_ConfigMenu_Tab_DataResets_Logout, DPSMateSettings["dataresetslogout"])
+
+	local vars = {
+		["DPSMate_ConfigMenu_Tab_DataResets_EnteringWorld"] = "dataresetsworld",
+		["DPSMate_ConfigMenu_Tab_DataResets_JoinParty"] = "dataresetsjoinparty",
+		["DPSMate_ConfigMenu_Tab_DataResets_PartyMemberChanged"] = "dataresetspartyamount",
+		["DPSMate_ConfigMenu_Tab_DataResets_LeaveParty"] = "dataresetsleaveparty",
+		["DPSMate_ConfigMenu_Tab_DataResets_Sync"] = "dataresetssync",
+		["DPSMate_ConfigMenu_Tab_DataResets_Logout"] = "dataresetslogout",
+	}
+	local menu = UIDROPDOWNMENU_INIT_MENU
+	if menu then
+		local settingsKey = vars[menu:GetName()]
+		if settingsKey then
+			UIDropDownMenu_SetSelectedValue(menu, DPSMateSettings[settingsKey])
+		end
 	end
-	DPSMate_ConfigMenu.visBars8 = true
 end
 
 function DPSMate.Options:NumberFormatDropDown()
