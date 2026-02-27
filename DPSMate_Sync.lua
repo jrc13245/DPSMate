@@ -4,8 +4,8 @@
 -- Fails
 
 -- Local Variables
-local player = (UnitName("player"))
-local _, playerclass = UnitClass("player")
+local player = ""
+local _, playerclass = "", ""
 local pid = 0
 local time, iterator, voteStarter = 0, 1, false
 local t = {}
@@ -57,8 +57,12 @@ end
 -- Beginn Functions
 
 function DPSMate.Sync:OnLoad()
+	player = UnitName("player") or ""
+	_, playerclass = UnitClass("player")
+	playerclass = playerclass or ""
+	if player == "" then return end
 	DB:BuildUser(player, strlower(playerclass))
-	pid = DPSMateUser[player][1]
+	pid = DPSMateUser[player] and DPSMateUser[player][1] or 0
 	Execute = {}
 	for cat, val in pairs(important) do
 		Execute[cat..sKey] = val

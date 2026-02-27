@@ -601,6 +601,8 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 		local amount, school = GetDamage(nextword)
 		local prefixAmount, prefixCase, k = GetPrefix(msg, k)
 
+		if target == "you" then target = Player end
+
 		DB:AddSpellSchool(ability,school)
 		local block = 0
 		if prefixCase then
@@ -608,7 +610,7 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 			elseif prefixCase == "blocked" then block = 1; hit=0; crit=0
 			else end -- Partial resists(?)
 		end
-		
+
 		if Kicks[ability] then DB:AssignPotentialKick(Player, ability, target, GetTime()) end
 		if DmgProcs[ability] then DB:BuildBuffs(Player, Player, ability, true) end
 		if self.IgnoredDmgSpells[ability] then return end
@@ -912,8 +914,8 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 						if self.TargetParty[source] then
 							DB:BuildFail(1, target, source, ability, amount);
 						end
-						DB:DeathHistory(target, source, ability, amount, hit, crit, 0, 0) 
-					else
+						DB:DeathHistory(target, source, ability, amount, hit, crit, 0, 0)
+					elseif target ~= source then
 						DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
 					end
 					DB:AddSpellSchool(ability,school)

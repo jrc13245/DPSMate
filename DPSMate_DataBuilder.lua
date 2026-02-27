@@ -800,8 +800,10 @@ end
 DPSMate.DB.PLAYER_TARGET_CHANGED = function()
 	if UnitIsPlayer("target") then
 		local name = UnitName("target")
+		if not name then return end
 		local pet = UnitName("targetpet")
 		local _, class = UnitClass("target")
+		if not class then return end
 		local fac = UnitFactionGroup("target") or ""
 		local level = UL("target")
 		if DPSMateUser[name] then
@@ -866,6 +868,7 @@ DPSMate.DB.PLAYER_ENTERING_WORLD = function()
 end
 
 function DPSMate.DB:OnGroupUpdate()
+	if not self.loaded then return end
 	local type = "raid"
 	local num = GetNumRaidMembers()
 	DPSMate.Parser.TargetParty = {}
@@ -939,6 +942,7 @@ function DPSMate.DB:OnGroupUpdate()
 	end
 	local pet = UnitName("pet")
 	local name = UnitName("player")
+	if not name then return end
 	if not DPSMateUser[name] then
 		self.userlen = self.userlen + 1
 		DPSMateUser[name] = {[1] = self.userlen}
@@ -2323,12 +2327,15 @@ function DPSMate.DB:UpdatePlayerCBT(cbt)
 	local num = GetNumRaidMembers()
 	if not DPSCBT["effective"] then return true end
 	local cbt1, cbt2 = DPSCBT["effective"][1], DPSCBT["effective"][2]
+	if not cbt1 or not cbt2 then return true end
 	if num<=0 then
 		type = "party"
 		num = GetNumPartyMembers()
 		if UnitAffectingCombat("player") or UnitAffectingCombat("pet") then
-			cbt1[player] = (cbt1[player] or 0) + cbt
-			cbt2[player] = (cbt2[player] or 0) + cbt
+			if player and player ~= "" then
+				cbt1[player] = (cbt1[player] or 0) + cbt
+				cbt2[player] = (cbt2[player] or 0) + cbt
+			end
 			notInCombat = false
 		end
 	end
@@ -2371,9 +2378,11 @@ function DPSMate.DB:OnUpdate()
 			notInCombat = self:UpdatePlayerCBT(LastUpdate) -- Slowing it down
 			
 			-- Check NPC E CBT Time (May be inaccurate) -> Can be used as active time later
-			for cat, _ in pairs(ActiveMob) do
-				cbtpt[1][cat] = (cbtpt and cbtpt[1] and cbtpt[1][cat] or 0) + LastUpdate
-				cbtpt[2][cat] = (cbtpt and cbtpt[2] and cbtpt[2][cat] or 0) + LastUpdate
+			if cbtpt and cbtpt[1] and cbtpt[2] then
+				for cat, _ in pairs(ActiveMob) do
+					cbtpt[1][cat] = (cbtpt[1][cat] or 0) + LastUpdate
+					cbtpt[2][cat] = (cbtpt[2][cat] or 0) + LastUpdate
+				end
 			end
 			ActiveMob = {}
 			
