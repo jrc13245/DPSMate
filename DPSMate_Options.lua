@@ -1373,6 +1373,7 @@ function DPSMate.Options:DataResetsDropDown()
 		["DPSMate_ConfigMenu_Tab_DataResets_Logout"] = "dataresetslogout",
 	}
 	local menu = UIDROPDOWNMENU_INIT_MENU
+	if type(menu) == "string" then menu = getglobal(menu) end
 	if menu then
 		local settingsKey = vars[menu:GetName()]
 		if settingsKey then
