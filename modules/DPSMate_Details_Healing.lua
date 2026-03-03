@@ -814,17 +814,16 @@ function DPSMate.Modules.DetailsHealing:GetSummarizedTable(arr, b, cname)
 end
 
 function DPSMate.Modules.DetailsHealing:GetAuraGainedArr(k)
-	local modes = {["total"]=1,["currentfight"]=2}
-	for cat, val in pairs(DPSMateSettings["windows"][k]["options"][2]) do
-		if val then
-			if strfind(cat, "segment") then
-				local num = tonumber(strsub(cat, 8))
-				return DPSMateHistory["Auras"][num]
-			else
-				return DPSMateAurasGained[modes[cat]]
-			end
+	local opts = DPSMateSettings["windows"][k]["options"][2]
+	if opts["total"] then return DPSMateAurasGained[1] end
+	if opts["currentfight"] then return DPSMateAurasGained[2] end
+	for cat, val in pairs(opts) do
+		if val and strfind(cat, "segment") then
+			local num = tonumber(strsub(cat, 8))
+			return DPSMateHistory["Auras"][num]
 		end
 	end
+	return DPSMateAurasGained[1]
 end
 
 function DPSMate.Modules.DetailsHealing:CheckProcs(name, val, cname)

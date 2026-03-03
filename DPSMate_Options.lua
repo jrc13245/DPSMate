@@ -941,6 +941,10 @@ function DPSMate.Options:PopUpAccept(bool, bypass)
 		
 		for _, val in pairs(DPSMateSettings["windows"]) do
 			if not val["options"][2]["total"] and not val["options"][2]["currentfight"] then
+				-- No valid mode selected; clear all entries and default to total
+				for cat, _ in pairs(val["options"][2]) do
+					val["options"][2][cat] = false
+				end
 				val["options"][2]["total"] = true
 			end
 		end

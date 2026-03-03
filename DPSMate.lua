@@ -841,57 +841,66 @@ end
 function DPSMate:GetMode(k)
 	k = k or 1
 	local Handler = DPSMate.RegistredModules[DPSSettings["windows"][k]["CurMode"]]
-	local result = {total={Handler.DB[1], DPSMateCombatTime["total"], DPSMateCombatTime["effective"][1]}, currentfight={Handler.DB[2], DPSMateCombatTime["current"], DPSMateCombatTime["effective"][2]}}
+	local opts = DPSSettings["windows"][k]["options"][2]
+	-- Check in deterministic order: total first, then currentfight, then segments
+	if opts["total"] then
+		return Handler.DB[1], DPSMateCombatTime["total"], DPSMateCombatTime["effective"][1]
+	end
+	if opts["currentfight"] then
+		return Handler.DB[2], DPSMateCombatTime["current"], DPSMateCombatTime["effective"][2]
+	end
 	local num
-	for cat, val in pairs(DPSSettings["windows"][k]["options"][2]) do
-		if val then
-			if strfind(cat, "segment") then
-				num = tonumber(strsub(cat, 8))
-				if (Handler.Hist) and DPSHist[Handler.Hist] and self:TableLength(DPSHist[Handler.Hist]) >= num then
-					return DPSHist[Handler.Hist][num], DPSMateCombatTime["segments"][num][1], DPSMateCombatTime["segments"][num][2]
-				else
-					return {}, 0, 0
-				end
+	for cat, val in pairs(opts) do
+		if val and strfind(cat, "segment") then
+			num = tonumber(strsub(cat, 8))
+			if (Handler.Hist) and DPSHist[Handler.Hist] and self:TableLength(DPSHist[Handler.Hist]) >= num then
+				return DPSHist[Handler.Hist][num], DPSMateCombatTime["segments"][num][1], DPSMateCombatTime["segments"][num][2]
 			else
-				return result[cat][1], result[cat][2], result[cat][3]
+				return {}, 0, 0
 			end
 		end
 	end
+	-- Fallback: default to total
+	return Handler.DB[1], DPSMateCombatTime["total"], DPSMateCombatTime["effective"][1]
 end
 
 function DPSMate:GetModeByArr(arr, k, Hist)
-	local result = {total={arr[1], DPSMateCombatTime["total"], DPSMateCombatTime["effective"][1]}, currentfight={arr[2], DPSMateCombatTime["current"], DPSMateCombatTime["effective"][2]}}
+	local opts = DPSSettings["windows"][k]["options"][2]
+	-- Check in deterministic order: total first, then currentfight, then segments
+	if opts["total"] then
+		return arr[1], DPSMateCombatTime["total"], DPSMateCombatTime["effective"][1]
+	end
+	if opts["currentfight"] then
+		return arr[2], DPSMateCombatTime["current"], DPSMateCombatTime["effective"][2]
+	end
 	local num
-	for cat, val in pairs(DPSSettings["windows"][k]["options"][2]) do
-		if val then
-			if strfind(cat, "segment") then
-				num = tonumber(strsub(cat, 8))
-				if (Hist or arr.Hist) and DPSHist[Hist or arr.Hist] and self:TableLength(DPSHist[Hist or arr.Hist]) >= num then
-					return DPSHist[Hist or arr.Hist][num], DPSMateCombatTime["segments"][num][1], DPSMateCombatTime["segments"][num][2]
-				else
-					return {}, 0, 0
-				end
+	for cat, val in pairs(opts) do
+		if val and strfind(cat, "segment") then
+			num = tonumber(strsub(cat, 8))
+			if (Hist or arr.Hist) and DPSHist[Hist or arr.Hist] and self:TableLength(DPSHist[Hist or arr.Hist]) >= num then
+				return DPSHist[Hist or arr.Hist][num], DPSMateCombatTime["segments"][num][1], DPSMateCombatTime["segments"][num][2]
 			else
-				return result[cat][1], result[cat][2], result[cat][3]
+				return {}, 0, 0
 			end
 		end
 	end
+	-- Fallback: default to total
+	return arr[1], DPSMateCombatTime["total"], DPSMateCombatTime["effective"][1]
 end
 
 function DPSMate:GetModeName(k)
 	k = k or 1
-	local result = {total="Total", currentfight="Current fight"}
+	local opts = DPSSettings["windows"][k]["options"][2]
+	if opts["total"] then return "Total" end
+	if opts["currentfight"] then return "Current fight" end
 	local num
-	for cat, val in pairs(DPSSettings["windows"][k]["options"][2]) do
-		if val then
-			if strfind(cat, "segment") then
-				num = tonumber(strsub(cat, 8))
-				return DPSHist["names"][num]
-			else
-				return result[cat]
-			end
+	for cat, val in pairs(opts) do
+		if val and strfind(cat, "segment") then
+			num = tonumber(strsub(cat, 8))
+			return DPSHist["names"][num]
 		end
 	end
+	return "Total"
 end
 
 function DPSMate:Disable()

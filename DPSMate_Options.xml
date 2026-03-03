@@ -3001,16 +3001,18 @@
 										end
 									end
 									for p=1, DPSMate:TableLength(DPSMateSettings["windows"]) do
-										local TL = DPSMate:TableLength(DPSMateSettings["windows"][p]["options"][2])
-										local i = 1
+										local hasTrue = false
 										for _,val in pairs(DPSMateSettings["windows"][p]["options"][2]) do
-											i=i+1
 											if val==true then
-												break 
+												hasTrue = true
+												break
 											end
-											if i==TL then
-												DPSMateSettings["windows"][p]["options"][2]["total"] = true
+										end
+										if not hasTrue then
+											for cat,_ in pairs(DPSMateSettings["windows"][p]["options"][2]) do
+												DPSMateSettings["windows"][p]["options"][2][cat] = false
 											end
+											DPSMateSettings["windows"][p]["options"][2]["total"] = true
 										end
 									end
 									DPSMate.Options:InitializeSegments()
