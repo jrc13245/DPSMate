@@ -802,7 +802,8 @@ DPSMate.DB.PLAYER_TARGET_CHANGED = function()
 		local name = UnitName("target")
 		if not name then return end
 		local pet = UnitName("targetpet")
-		local _, class = UnitClass("target")
+		local classLoc, class = UnitClass("target")
+		class = class or classLoc
 		if not class then return end
 		local fac = UnitFactionGroup("target") or ""
 		local level = UL("target")
@@ -899,7 +900,7 @@ function DPSMate.DB:OnGroupUpdate()
 		local name = UnitName(type..i)
 		if name and name ~= "" then
 			local pet = UnitName(type.."pet"..i)
-			local _,classEng = UnitClass(type..i)
+			local classLoc, classEng = UnitClass(type..i)
 			local fac = UnitFactionGroup(type..i)
 			local gname, _, _ = GetGuildInfo(type..i)
 			local level = UL(type..i)
@@ -908,8 +909,11 @@ function DPSMate.DB:OnGroupUpdate()
 				DPSMateUser[name] = {[1] = self.userlen}
 				DPSMate.UserId = nil
 			end
-			if classEng then
-				DPSMateUser[name][2] = strlower(classEng)
+			local resolvedClass = classEng or classLoc
+			if resolvedClass then
+				DPSMateUser[name][2] = strlower(resolvedClass)
+			elseif not DPSMateUser[name][2] then
+				allNamesResolved = false
 			end
 			DPSMateUser[name][4] = false
 			DPSMateUser[name][6] = nil
@@ -939,6 +943,10 @@ function DPSMate.DB:OnGroupUpdate()
 				DPSMateUser[name][8] = level
 			end
 		end
+	end
+	-- If any class data was missing, schedule a retry to resolve it.
+	if not allNamesResolved and not pendingGroupUpdateTime then
+		pendingGroupUpdateTime = GT() + 1
 	end
 	local pet = UnitName("pet")
 	local name = UnitName("player")

@@ -565,6 +565,7 @@ end
 
 local SSDChoices = {" hits ", " crits ", " was ", " is parried by ", " missed ", " is absorbed by ", "ast ", " failed.", "You interrupt ", " is reflected back ", "You perform ", "You resisted ", "ZONE_INFO: ", "COMBATANT_INFO: ", "LOOT: ", " critically hits ", " critically strikes "}
 function DPSMate.Parser:SelfSpellDMG(msg)
+	if strfind(msg, " is immune to ", 1, true) then return end
 	local i,j,k = 0,0,0
 	local nextword, choice, ability;
 	ability, choice, k = GetNextWord(msg, k, SSDChoices, false)
@@ -780,6 +781,7 @@ local FPDList2 = {" begins to cast ", " begins to perform ", " is killed by ", "
 function DPSMate.Parser:FriendlyPlayerDamage(msg)
 	local i,j,k = 0,0,0;
 	local nextword, choice;
+	if strfind(msg, " is immune to ", 1, true) then return end
 	i,j = strfind(msg, " interrupts ", 1, true);
 	if not i then
 		i,j = strfind(msg, " 's ", 1, true);
@@ -835,7 +837,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 
 					i,j = strfind(msg, " 's ", 1, true);
 					local src = strsub(msg, p+1, i-1)
-					i,j = strfind(msg, ".", j+1, true)
+					i = strfind(msg, ".", j+1, true)
 					local ab = strsub(msg, j+1, i-1)
 					DB:EnemyDamage(true, nil, src, ab, 0, 0, 0, 0, 0, 1, 0, tar, 0, 0)
 					DB:DamageDone(src, ab, 0, 0, 0, 0, 0, 1, 0, 0, 0)
@@ -1255,7 +1257,7 @@ function DPSMate.Parser:CreatureVsSelfMisses(msg)
 	return
 end 
 
-local CVSSDChoices = {" hits ", " crits ", " misses you.", " was parried.", " was dodged.", " was resisted.", "You interrupt ", "You absorb ", " performs ", " fail", " was resisted by ", " was blocked.", " missed ", " was dodged by ", " was parried by ", " was blocked by ", "You resist ", " critically hits ", " critically strikes "}
+local CVSSDChoices = {" hits ", " crits ", " misses you.", " was parried.", " was dodged.", " was resisted.", "You interrupt ", "You absorb ", " performs ", " fail", " was resisted by ", " was blocked.", " missed ", " was dodged by ", " was parried by ", " was blocked by ", "You resist ", " critically hits ", " critically strikes ", " casts "}
 function DPSMate.Parser:CreatureVsSelfSpellDamage(msg)
 	local i,j,k = 0,0,0
 	local nextword, choice;
@@ -1264,8 +1266,8 @@ function DPSMate.Parser:CreatureVsSelfSpellDamage(msg)
 		local debug = DPSMate.Debug and DPSMate.Debug:Store("11: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("11: Event not parsed yet, inform Shino! => "..msg))
 		return
 	end
-	if choice == 10 then return end
-	
+	if choice == 10 or choice == 20 then return end
+
 	if choice < 3 or choice == 18 or choice == 19 then
 		local hit,crit = 0,0
 		if choice == 1 then hit=1 else crit=1 end

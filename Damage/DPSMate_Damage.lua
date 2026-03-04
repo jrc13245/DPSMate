@@ -43,12 +43,12 @@ function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 			-- skip unknown users
 		elseif (not DPSMateUser[name][4] or (DPSMateUser[name][4] and not DPSMateSettings["mergepets"])) then
 			if DPSMate:ApplyFilter(k, name) then
-				CV = val["i"]
+				CV = val["i"] or 0
 				if DPSMateSettings["mergepets"] and petsByOwner[cat] then
 					processedOwners[cat] = true
 					for _, petCat in pairs(petsByOwner[cat]) do
 						if arr[petCat] then
-							CV = CV + arr[petCat]["i"]
+							CV = CV + (arr[petCat]["i"] or 0)
 						end
 					end
 				end
@@ -80,7 +80,7 @@ function DPSMate.Modules.Damage:GetSortedTable(arr, k)
 					CV = 0
 					for _, petCat in pairs(petList) do
 						if arr[petCat] then
-							CV = CV + arr[petCat]["i"]
+							CV = CV + (arr[petCat]["i"] or 0)
 						end
 					end
 					if CV > 0 then
@@ -226,7 +226,7 @@ function DPSMate.Modules.Damage:ShowTooltip(user,k)
 			local petTotal = 0
 			for _, pid in pairs(petIds) do
 				if val[pid] and (val[pid]["i"] or 0) > 0 then
-					petTotal = petTotal + val[pid]["i"]
+					petTotal = petTotal + (val[pid]["i"] or 0)
 				end
 			end
 			if petTotal > 0 then

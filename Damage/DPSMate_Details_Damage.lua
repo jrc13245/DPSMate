@@ -224,7 +224,7 @@ function DPSMate.Modules.DetailsDamage:EvalToggleTable(comp)
 								end
 							end
 						end
-						c[1] = c[1] + val[pEntry[1]]["i"]
+						c[1] = c[1] + (val[pEntry[1]]["i"] or 0)
 					end
 				end
 			end

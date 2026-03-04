@@ -58,8 +58,9 @@ end
 
 function DPSMate.Sync:OnLoad()
 	player = UnitName("player") or ""
-	_, playerclass = UnitClass("player")
-	playerclass = playerclass or ""
+	local _pcLoc
+	_pcLoc, playerclass = UnitClass("player")
+	playerclass = playerclass or _pcLoc or ""
 	if player == "" then return end
 	DB:BuildUser(player, strlower(playerclass))
 	pid = DPSMateUser[player] and DPSMateUser[player][1] or 0

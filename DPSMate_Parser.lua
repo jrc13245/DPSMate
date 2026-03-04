@@ -483,7 +483,8 @@ DPSMate.Parser.player = UnitName("player")
 DPSMate.Parser.playerclass = nil
 
 -- Local Variables
-local _,playerclass = UnitClass("player")
+local playerclassLoc,playerclass = UnitClass("player")
+playerclass = playerclass or playerclassLoc
 local fac = UnitFactionGroup("player")
 local UL = UnitLevel
 
@@ -495,7 +496,9 @@ local GetPlayerBuff = GetPlayerBuff
 
 function DPSMate.Parser:OnLoad()
 	self.player, self.realm = UnitName("player")
-	_,playerclass = UnitClass("player")
+	local _pcLoc
+	_pcLoc,playerclass = UnitClass("player")
+	playerclass = playerclass or _pcLoc
 	DPSMate.DB:BuildUser(self.player, strlower(playerclass))
 	if DPSMateUser[self.player] then
 		DPSMateUser[self.player][2] = strlower(playerclass)
