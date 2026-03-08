@@ -563,7 +563,7 @@ function DPSMate.Parser:SelfMisses(msg)
 	end
 end
 
-local SSDChoices = {" hits ", " crits ", " was ", " is parried by ", " missed ", " is absorbed by ", "ast ", " failed.", "You interrupt ", " is reflected back ", "You perform ", "You resisted ", "ZONE_INFO: ", "COMBATANT_INFO: ", "LOOT: ", " critically hits ", " critically strikes "}
+local SSDChoices = {" hits ", " crits ", " was ", " is parried by ", " missed ", " is absorbed by ", " cast ", " failed.", "You interrupt ", " is reflected back ", "You perform ", "You resisted ", "ZONE_INFO: ", "COMBATANT_INFO: ", "LOOT: ", " critically hits ", " critically strikes "}
 function DPSMate.Parser:SelfSpellDMG(msg)
 	if strfind(msg, " is immune to ", 1, true) then return end
 	local i,j,k = 0,0,0
@@ -607,7 +607,7 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 		DB:AddSpellSchool(ability,school)
 		local block = 0
 		if prefixCase then
-			if prefixCase == "absorbed" then DB:SetUnregisterVariables(amount, ability, Player)
+			if prefixCase == "absorbed" then DB:SetUnregisterVariables(prefixAmount, ability, Player)
 			elseif prefixCase == "blocked" then block = 1; hit=0; crit=0
 			else end -- Partial resists(?)
 		end
@@ -1032,13 +1032,14 @@ function DPSMate.Parser:FriendlyPlayerHits(msg)
 			else block = 1 end -- We could do more with that info
 		end
 
-		DB:EnemyDamage(true, nil, source, AAttack, hit, crit, 0, 0, 0, 0, amount, target, block, 0) -- glance?
-		DB:DamageDone(source, AAttack, hit, crit, 0, 0, 0, 0, amount, glance, block)
-		if self.TargetParty[target] then 
+		DB:EnemyDamage(true, nil, source, AAttack, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
+		if self.TargetParty[target] then
 			if self.TargetParty[source] then
 				DB:BuildFail(1, target, source, AAttack, amount);
 			end
 			DB:DeathHistory(target, source, AAttack, amount, hit, crit, 0, 0)
+		else
+			DB:DamageDone(source, AAttack, hit, crit, 0, 0, 0, 0, amount, glance, block)
 		end
 		return
 	elseif choice == 3 then

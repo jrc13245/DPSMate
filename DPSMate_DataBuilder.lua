@@ -1521,10 +1521,18 @@ function DPSMate.DB:EnemyDamage(mode, arr, Duser, Dname, Dhit, Dcrit, Dmiss, Dpa
 end
 
 function DPSMate.DB:Healing(mode, arr, Duser, Dname, Dhit, Dcrit, Damount)
-	if ((mode==0 and not DPSMate.RegistredModules["effectivehealing"] and not DPSMate.RegistredModules["healingandabsorbs"]) or 
-		(mode==1 and not DPSMate.RegistredModules["healing"]) or 
+	if ((mode==0 and not DPSMate.RegistredModules["effectivehealing"] and not DPSMate.RegistredModules["healingandabsorbs"]) or
+		(mode==1 and not DPSMate.RegistredModules["healing"]) or
 		(mode==2 and not DPSMate.RegistredModules["overhealing"])) then return end
-	if not CombatState then return end
+	if not CombatState then
+		if cheatCombat<GT() and UnitAffectingCombat("player") then
+			DPSMate.Options:NewSegment()
+			CombatState = true
+			combatStartTime = GT()
+		else
+			return
+		end
+	end
 	Duser = self:BuildUser(Duser)
 	Dname = self:BuildAbility(Dname)
 	
@@ -1583,11 +1591,19 @@ end
 
 function DPSMate.DB:HealingTaken(mode, arr, Duser, Dname, Dhit, Dcrit, Damount, target)
 	if ((mode==0 and not DPSMate.RegistredModules["healingtaken"] and not DPSMate.RegistredModules["healing"]) or (mode==1 and not DPSMate.RegistredModules["effectivehealingtaken"] and not DPSMate.RegistredModules["effectivehealing"] and not DPSMate.RegistredModules["healingandabsorbs"]) or (mode==2 and not DPSMate.RegistredModules["OHealingTaken"] and not DPSMate.RegistredModules["overhealing"])) then return end
-	if not CombatState then return end
+	if not CombatState then
+		if cheatCombat<GT() and UnitAffectingCombat("player") then
+			DPSMate.Options:NewSegment()
+			CombatState = true
+			combatStartTime = GT()
+		else
+			return
+		end
+	end
 	Duser = self:BuildUser(Duser)
 	Dname = self:BuildAbility(Dname)
 	target = self:BuildUser(target)
-	
+
 	if mode == 0 then arr = DPSHealTaken
 	elseif mode == 1 then arr = DPSEHealTaken
 	else arr = DPSOHealTaken end
