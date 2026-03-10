@@ -268,7 +268,6 @@ DPSMate.Parser.DmgProcs = {
 	-- Deathbringer Skipped
 }
 DPSMate.Parser.IgnoredDmgSpells = {
-	["Arcane Instability"] = true,
 }
 DPSMate.Parser.TargetParty = {}
 DPSMate.Parser.RCD = {

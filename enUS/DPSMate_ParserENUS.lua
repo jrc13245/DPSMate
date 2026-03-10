@@ -809,11 +809,31 @@ end
 
 local PDChoices = {" suffers ", " is afflicted by ", " is absorbed by ", " drains ", " was resisted by "}
 function DPSMate.Parser:PeriodicDamage(msg)
-	-- Pattern-based matching for periodic damage
-	-- NOTE: Disabled for periodic damage because TWoW has non-standard
-	-- PERIODICAURADAMAGE* format strings (globals are swapped), causing
-	-- wrong field mappings. Legacy parser handles these correctly.
-	-- if CP.ready then ... end
+	-- Pattern-based matching for periodic damage (auto-detected field mappings)
+	if CP.ready then
+		local clean, absorbed = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.periodicDmg)
+		if hitType then
+			local sufferer = r.target or Player
+			local caster = r.source or Player
+			local amount = r.amount
+			local school = r.school
+			local ability = r.ability
+			if not ability or not amount then return end
+
+			if absorbed > 0 then
+				DB:SetUnregisterVariables(absorbed, ability.."(Periodic)", caster)
+			end
+			DB:EnemyDamage(true, nil, caster, ability.."(Periodic)", 1, 0, 0, 0, 0, 0, amount, sufferer, 0, 0)
+			DB:DamageDone(caster, ability.."(Periodic)", 1, 0, 0, 0, 0, 0, amount, 0, 0)
+			if self.TargetParty[sufferer] and self.TargetParty[caster] then
+				DB:BuildFail(1, sufferer, caster, ability.."(Periodic)", amount)
+				DB:DeathHistory(sufferer, caster, ability.."(Periodic)", amount, 1, 0, 0, 0)
+			end
+			DB:AddSpellSchool(ability.."(Periodic)", school)
+			return
+		end
+	end
 
 	-- Legacy fallback
 	local i,j,k = 0,0,0
