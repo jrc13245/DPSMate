@@ -6,6 +6,7 @@ local strsub = string.sub
 local GetTime = GetTime
 local strfind = string.find
 local DB = DPSMate.DB
+local CP = DPSMate.CombatPatterns
 
 ----------------------------------------------------------------------------------
 --------------                    Init                              --------------                                  
@@ -265,6 +266,9 @@ function DPSMate.Parser:InitParser()
 		local str = string.gsub(glb, "(%%%d?$?s)('s)", "%1% %2")
 		setglobal(val, str)
 	end
+
+	-- Build pattern tables from the (now-normalized) WoW globals
+	DPSMate.CombatPatterns:BuildPatterns()
 end
 
 function DPSMate.Parser:TestSuit()
@@ -457,6 +461,42 @@ end
 
 local SHChoices = {"hit ", "crit ", "fall and lose ", "lose ", "suffer ", "are drowning and lose ", "critically strike "}
 function DPSMate.Parser:SelfHits(msg)
+	-- Pattern-based matching (auto-adapts to server combat log format)
+	if CP.ready then
+		local clean, absorbed, blocked, glancing, crushing = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.selfMeleeHit)
+		if hitType then
+			local hit, crit = 0, 0
+			if hitType == "hit" then hit = 1 else crit = 1 end
+			local glance_val = 0
+			if glancing then glance_val = 1; hit = 0; crit = 0 end
+			local block_val = blocked
+			if block_val == 1 then hit = 0; crit = 0 end
+			if absorbed > 0 then
+				DB:SetUnregisterVariables(absorbed, AAttack, Player)
+			end
+			DB:EnemyDamage(true, nil, Player, AAttack, hit, crit, 0, 0, 0, 0, r.amount, r.target, block_val, 0)
+			if self.TargetParty[r.target] then
+				DB:BuildFail(1, r.target, Player, AAttack, r.amount)
+				DB:DeathHistory(r.target, Player, AAttack, r.amount, hit, crit, 0, 0)
+			else
+				DB:DamageDone(Player, AAttack, hit, crit, 0, 0, 0, 0, r.amount, glance_val, block_val)
+			end
+			return
+		end
+		-- Try environment damage patterns
+		hitType, r = CP:TryMatch(clean, CP.envDmgSelf)
+		if hitType then
+			local envName = hitType:sub(1,1):upper() .. hitType:sub(2)
+			DB:DamageTaken(Player, envName, 1, 0, 0, 0, 0, 0, r.amount, "Environment", 0, 0)
+			DB:DeathHistory(Player, "Environment", envName, r.amount, 1, 0, 0, 0)
+			if hitType == "lava" then DB:AddSpellSchool("Lava","fire") end
+			if hitType == "fire" then DB:AddSpellSchool("Fire","fire") end
+			return
+		end
+	end
+
+	-- Legacy fallback
 	local i,j,k = 0,0,5
 	local nextword, choice;
 	_, choice, k = GetNextWord(msg, k, SHChoices, true)
@@ -566,11 +606,77 @@ end
 local SSDChoices = {" hits ", " crits ", " was ", " is parried by ", " missed ", " is absorbed by ", " cast ", " failed.", "You interrupt ", " is reflected back ", "You perform ", "You resisted ", "ZONE_INFO: ", "COMBATANT_INFO: ", "LOOT: ", " critically hits ", " critically strikes "}
 function DPSMate.Parser:SelfSpellDMG(msg)
 	if strfind(msg, " is immune to ", 1, true) then return end
+
+	-- Pattern-based matching for spell hits/crits
+	if CP.ready then
+		local clean, absorbed = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.selfSpellHit)
+		if hitType then
+			local hit, crit = 0, 0
+			if hitType == "hit" then hit = 1 else crit = 1 end
+			local ability = r.ability
+			local target = r.target or Player
+			local amount = r.amount
+			local school = r.school
+
+			if target == "you" then target = Player end
+			if school then DB:AddSpellSchool(ability, school) end
+			local block = 0
+			if absorbed > 0 then DB:SetUnregisterVariables(absorbed, ability, Player) end
+
+			if Kicks[ability] then DB:AssignPotentialKick(Player, ability, target, GetTime()) end
+			if DmgProcs[ability] then DB:BuildBuffs(Player, Player, ability, true) end
+			if self.IgnoredDmgSpells[ability] then return end
+			DB:EnemyDamage(true, nil, Player, ability, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
+			if self.TargetParty[target] then
+				DB:BuildFail(1, target, Player, ability, amount)
+				DB:DeathHistory(target, Player, ability, amount, hit, crit, 0, 0)
+			else
+				DB:DamageDone(Player, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
+			end
+			return
+		end
+		-- Try self spell misses
+		hitType, r = CP:TryMatch(clean, CP.selfSpellMiss)
+		if hitType then
+			local ability = r.ability
+			local target = r.target
+			if target == "you" then target = Player end
+			if hitType == "miss" then
+				DB:EnemyDamage(true, nil, Player, ability, 0, 0, 1, 0, 0, 0, 0, target, 0, 0)
+				DB:DamageDone(Player, ability, 0, 0, 1, 0, 0, 0, 0, 0, 0)
+			elseif hitType == "resist" then
+				DB:EnemyDamage(true, nil, Player, ability, 0, 0, 0, 0, 0, 1, 0, target, 0, 0)
+				DB:DamageDone(Player, ability, 0, 0, 0, 0, 0, 1, 0, 0, 0)
+			elseif hitType == "parry" then
+				DB:EnemyDamage(true, nil, Player, ability, 0, 0, 0, 1, 0, 0, 0, target, 0, 0)
+				DB:DamageDone(Player, ability, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+			elseif hitType == "dodge" then
+				DB:EnemyDamage(true, nil, Player, ability, 0, 0, 0, 0, 1, 0, 0, target, 0, 0)
+				DB:DamageDone(Player, ability, 0, 0, 0, 0, 1, 0, 0, 0, 0)
+			elseif hitType == "absorb" then
+				DB:Absorb(ability, target, Player)
+			elseif hitType == "block" then
+				DB:EnemyDamage(true, nil, Player, ability, 0, 0, 0, 0, 0, 0, 0, target, 1, 0)
+				DB:DamageDone(Player, ability, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+			elseif hitType == "immune" then
+				-- immune, no action needed
+			end
+			return
+		end
+	end
+
+	-- Legacy fallback
 	local i,j,k = 0,0,0
 	local nextword, choice, ability;
 	ability, choice, k = GetNextWord(msg, k, SSDChoices, false)
 	if choice == -1 then
-		local debug = DPSMate.Debug and DPSMate.Debug:Store("3: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("3: Event not parsed yet, inform Shino! => "..msg))
+		-- Last resort: try periodic damage via legacy parser
+		if strfind(msg, " suffers ", 1, true) then
+			self:PeriodicDamage(msg)
+		else
+			local debug = DPSMate.Debug and DPSMate.Debug:Store("3: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("3: Event not parsed yet, inform Shino! => "..msg))
+		end
 		return
 	end
 	local o,p = strfind(ability, "Your ", 1, true);
@@ -588,7 +694,7 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 	if choice == 12 then
 		return
 	end
-	
+
 	if choice < 3 or choice == 16 or choice == 17 then
 		local hit, crit = 0,0
 		if choice == 1 then hit = 1 else crit = 1 end
@@ -703,6 +809,13 @@ end
 
 local PDChoices = {" suffers ", " is afflicted by ", " is absorbed by ", " drains ", " was resisted by "}
 function DPSMate.Parser:PeriodicDamage(msg)
+	-- Pattern-based matching for periodic damage
+	-- NOTE: Disabled for periodic damage because TWoW has non-standard
+	-- PERIODICAURADAMAGE* format strings (globals are swapped), causing
+	-- wrong field mappings. Legacy parser handles these correctly.
+	-- if CP.ready then ... end
+
+	-- Legacy fallback
 	local i,j,k = 0,0,0
 	local nextword, choice, source;
 	source, choice, k = GetNextWord(msg, k, PDChoices, false)
@@ -711,7 +824,7 @@ function DPSMate.Parser:PeriodicDamage(msg)
 		return
 	end
 	if choice == 4 then return end
-	
+
 	if choice == 1 then
 		i,j = strfind(msg, " from ", k, true)
 		nextword = strsub(msg, k, i-1)
@@ -779,9 +892,74 @@ end
 local FPDList = {" hits ", " crits ", " was ", " is parried by ", " missed ", " misses ", " is absorbed by ", " fail", " is reflected back ", " immune ", " causes ", " critically hits ", " critically strikes "}
 local FPDList2 = {" begins to cast ", " begins to perform ", " is killed by ", " casts ", " performs "}
 function DPSMate.Parser:FriendlyPlayerDamage(msg)
+	if strfind(msg, " is immune to ", 1, true) then return end
+
+	-- Pattern-based matching for other player spell damage
+	if CP.ready then
+		local clean, absorbed = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.otherSpellHit)
+		if hitType then
+			local hit, crit = 0, 0
+			if hitType == "hit" then hit = 1 else crit = 1 end
+			local source = r.source
+			local ability = r.ability
+			local target = r.target
+			local amount = r.amount
+			local school = r.school
+
+			if target == "you" then target = Player end
+			if school then DB:AddSpellSchool(ability, school) end
+			local block = 0
+			if absorbed > 0 then DB:SetUnregisterVariables(absorbed, ability, source) end
+
+			if Kicks[ability] then DB:AssignPotentialKick(source, ability, target, GetTime()) end
+			if DmgProcs[ability] then DB:BuildBuffs(source, source, ability, true) end
+			if self.IgnoredDmgSpells[ability] then return end
+			DB:EnemyDamage(true, nil, source, ability, hit, crit, 0, 0, 0, 0, amount, target, block, 0)
+			if self.TargetParty[target] then
+				if self.TargetParty[source] then
+					DB:BuildFail(1, target, source, ability, amount)
+				end
+				DB:DeathHistory(target, source, ability, amount, hit, crit, 0, 0)
+			elseif target ~= source then
+				DB:DamageDone(source, ability, hit, crit, 0, 0, 0, 0, amount, 0, block)
+			end
+			return
+		end
+		-- Try other spell misses
+		hitType, r = CP:TryMatch(clean, CP.otherSpellMiss)
+		if hitType then
+			local source = r.source
+			local ability = r.ability
+			local target = r.target
+			if target == "you" then target = Player end
+			if hitType == "miss" then
+				DB:EnemyDamage(true, nil, source, ability, 0, 0, 1, 0, 0, 0, 0, target, 0, 0)
+				DB:DamageDone(source, ability, 0, 0, 1, 0, 0, 0, 0, 0, 0)
+			elseif hitType == "resist" then
+				DB:EnemyDamage(true, nil, source, ability, 0, 0, 0, 0, 0, 1, 0, target, 0, 0)
+				DB:DamageDone(source, ability, 0, 0, 0, 0, 0, 1, 0, 0, 0)
+			elseif hitType == "parry" then
+				DB:EnemyDamage(true, nil, source, ability, 0, 0, 0, 1, 0, 0, 0, target, 0, 0)
+				DB:DamageDone(source, ability, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+			elseif hitType == "dodge" then
+				DB:EnemyDamage(true, nil, source, ability, 0, 0, 0, 0, 1, 0, 0, target, 0, 0)
+				DB:DamageDone(source, ability, 0, 0, 0, 0, 1, 0, 0, 0, 0)
+			elseif hitType == "absorb" then
+				DB:Absorb(ability, target, source)
+			elseif hitType == "block" then
+				DB:EnemyDamage(true, nil, source, ability, 0, 0, 0, 0, 0, 0, 0, target, 1, 0)
+				DB:DamageDone(source, ability, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+			elseif hitType == "evade" then
+				-- evade, no action needed
+			end
+			return
+		end
+	end
+
+	-- Legacy fallback
 	local i,j,k = 0,0,0;
 	local nextword, choice;
-	if strfind(msg, " is immune to ", 1, true) then return end
 	i,j = strfind(msg, " interrupts ", 1, true);
 	if not i then
 		i,j = strfind(msg, " 's ", 1, true);
@@ -1002,6 +1180,74 @@ end
 
 local FPHChoices = {" hits ", " crits ", " falls and loses ", " loses ", " suffers ", " is drowning and loses ", " critically strikes ", " critically hits "}
 function DPSMate.Parser:FriendlyPlayerHits(msg)
+	-- Pattern-based matching for other player melee hits
+	if CP.ready then
+		local clean, absorbed, blocked, glancing, crushing = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.otherMeleeHit)
+		if hitType then
+			local hit, crit = 0, 0
+			if hitType == "hit" then hit = 1 else crit = 1 end
+			local source = r.source
+			local target = r.target
+			local amount = r.amount
+
+			if target == "you" then target = Player end
+
+			local glance_val = 0
+			if glancing then glance_val = 1; hit = 0; crit = 0 end
+			local block_val = blocked
+			if block_val == 1 then hit = 0; crit = 0 end
+			if absorbed > 0 then
+				DB:SetUnregisterVariables(absorbed, AAttack, source)
+			end
+
+			DB:EnemyDamage(true, nil, source, AAttack, hit, crit, 0, 0, 0, 0, amount, target, block_val, 0)
+			if self.TargetParty[target] then
+				if self.TargetParty[source] then
+					DB:BuildFail(1, target, source, AAttack, amount)
+				end
+				DB:DeathHistory(target, source, AAttack, amount, hit, crit, 0, 0)
+			else
+				DB:DamageDone(source, AAttack, hit, crit, 0, 0, 0, 0, amount, glance_val, block_val)
+			end
+			return
+		end
+		-- Try other melee misses
+		local hitType2, r2 = CP:TryMatch(clean, CP.otherMeleeMiss)
+		if hitType2 then
+			local source = r2.source
+			local target = r2.target
+			if target == "you" then target = Player end
+			if hitType2 == "miss" then
+				DB:EnemyDamage(true, nil, source, AAttack, 0, 0, 1, 0, 0, 0, 0, target, 0, 0)
+				DB:DamageDone(source, AAttack, 0, 0, 1, 0, 0, 0, 0, 0, 0)
+			elseif hitType2 == "parry" then
+				DB:EnemyDamage(true, nil, source, AAttack, 0, 0, 0, 1, 0, 0, 0, target, 0, 0)
+				DB:DamageDone(source, AAttack, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+			elseif hitType2 == "dodge" then
+				DB:EnemyDamage(true, nil, source, AAttack, 0, 0, 0, 0, 1, 0, 0, target, 0, 0)
+				DB:DamageDone(source, AAttack, 0, 0, 0, 0, 1, 0, 0, 0, 0)
+			elseif hitType2 == "block" then
+				DB:EnemyDamage(true, nil, source, AAttack, 0, 0, 0, 0, 0, 0, 0, target, 1, 0)
+				DB:DamageDone(source, AAttack, 0, 0, 0, 0, 0, 0, 0, 0, 1)
+			elseif hitType2 == "absorb" then
+				DB:Absorb(AAttack, target, source)
+			end
+			return
+		end
+		-- Try environment damage patterns
+		hitType, r = CP:TryMatch(clean, CP.envDmgOther)
+		if hitType then
+			local envName = hitType:sub(1,1):upper() .. hitType:sub(2)
+			DB:DamageTaken(r.source, envName, 1, 0, 0, 0, 0, 0, r.amount, "Environment", 0, 0)
+			DB:DeathHistory(r.source, "Environment", envName, r.amount, 1, 0, 0, 0)
+			if hitType == "lava" then DB:AddSpellSchool("Lava","fire") end
+			if hitType == "fire" then DB:AddSpellSchool("Fire","fire") end
+			return
+		end
+	end
+
+	-- Legacy fallback
 	local i,j,k = 0,0,0
 	local nextword, choice, source;
 	source, choice, k = GetNextWord(msg, k, FPHChoices, false)

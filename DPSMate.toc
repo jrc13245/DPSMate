@@ -16,6 +16,7 @@ enUS\Babble-Boss-2.3.lua
 enUS\NPCDB-1.0.lua
 
 DPSMate.lua
+DPSMate_CombatPatterns.lua
 
 enUS\enUS.lua
 

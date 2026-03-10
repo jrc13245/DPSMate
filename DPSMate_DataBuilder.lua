@@ -1168,13 +1168,15 @@ local spellSchoolNames = {
 	["holy"] = true,
 	["frost"] = true,
 	["arcane"] = true,
-	
+	["physical"] = true,
+
 	["Fire"] = true,
 	["Nature"] = true,
 	["Shadow"] = true,
 	["Holy"] = true,
 	["Frost"] = true,
 	["Arcane"] = true,
+	["Physical"] = true,
 	
 	-- deDE
 	["feuer"] = true,
