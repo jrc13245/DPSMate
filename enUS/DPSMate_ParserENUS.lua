@@ -1389,6 +1389,23 @@ function DPSMate.Parser:FriendlyPlayerMisses(msg)
 end
 
 function DPSMate.Parser:SpellDamageShieldsOnSelf(msg)
+	-- Pattern-based matching for self damage shields
+	if CP.ready then
+		local clean, absorbed = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.dmgShield)
+		if hitType then
+			local target = r.target or Player
+			local amount = r.amount
+			if target == "you" then target = Player end
+			if not amount then return end
+			if absorbed > 0 then DB:SetUnregisterVariables(absorbed, "Reflection", Player) end
+			DB:EnemyDamage(true, nil, Player, "Reflection", 1, 0, 0, 0, 0, 0, amount, target, 0, 0)
+			DB:DamageDone(Player, "Reflection", 1, 0, 0, 0, 0, 0, amount, 0, 0)
+			return
+		end
+	end
+
+	-- Legacy fallback
 	local i,j = strfind(msg, " to ", 1, true)
 	if not i then
 		return
@@ -1397,7 +1414,7 @@ function DPSMate.Parser:SpellDamageShieldsOnSelf(msg)
 	local amount, _ = GetDamage(nextword)
 	_,i = strfind(msg, ".", j+1, true)
 	local target = strsub(msg, j+1, i-1)
-	
+
 	if target == "you" then target = Player end
 	DB:EnemyDamage(true, nil, Player, "Reflection", 1, 0, 0, 0, 0, 0, amount, target, 0, 0)
 	DB:DamageDone(Player, "Reflection", 1, 0, 0, 0, 0, 0, amount, 0, 0)
@@ -1405,13 +1422,40 @@ function DPSMate.Parser:SpellDamageShieldsOnSelf(msg)
 end
 
 function DPSMate.Parser:SpellDamageShieldsOnOthers(msg)
+	-- Pattern-based matching for other damage shields
+	if CP.ready then
+		local clean, absorbed = CP:StripTrailers(msg)
+		local hitType, r = CP:TryMatch(clean, CP.dmgShield)
+		if hitType then
+			local source = r.source
+			local target = r.target
+			local amount = r.amount
+			if not amount then return end
+			if not source and not target then return end
+
+			if source and (npcdb:Contains(source) or strfind(source, "%s")) then
+				if not target then target = Player end
+				DB:EnemyDamage(false, nil, target, "Reflection", 1, 0, 0, 0, 0, 0, amount, source, 0, 0)
+				DB:DamageTaken(target, "Reflection", 1, 0, 0, 0, 0, 0, amount, source, 0, 0)
+				DB:DeathHistory(target, source, "Reflection", amount, 1, 0, 0, 0)
+			else
+				if not source then source = Player end
+				if not target then target = Player end
+				DB:EnemyDamage(true, nil, source, "Reflection", 1, 0, 0, 0, 0, 0, amount, target, 0, 0)
+				DB:DamageDone(source, "Reflection", 1, 0, 0, 0, 0, 0, amount, 0, 0)
+			end
+			return
+		end
+	end
+
+	-- Legacy fallback
 	local k;
 	local i,j = strfind(msg, " reflects ", 1, true)
 	if not i then
 		-- There may be resist events, but dont think they are relevant
 		return
 	end
-	
+
 	local source = strsub(msg, 1, i-1)
 	k = j+1
 	i,j = strfind(msg, " to ", k, true)
@@ -1419,7 +1463,7 @@ function DPSMate.Parser:SpellDamageShieldsOnOthers(msg)
 	k = j+1
 	i,j = strfind(msg, ".", k, true)
 	local target = strsub(msg, k, i-1)
-	
+
 	if npcdb:Contains(source) or strfind(source, "%s") then
 		DB:EnemyDamage(false, nil, target, "Reflection", 1, 0, 0, 0, 0, 0, amount, source, 0, 0)
 		DB:DamageTaken(target, "Reflection", 1, 0, 0, 0, 0, 0, amount, source, 0, 0)
