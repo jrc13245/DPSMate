@@ -487,7 +487,7 @@ function DPSMate.Parser:SelfHits(msg)
 		-- Try environment damage patterns
 		hitType, r = CP:TryMatch(clean, CP.envDmgSelf)
 		if hitType then
-			local envName = hitType:sub(1,1):upper() .. hitType:sub(2)
+			local envName = strupper(strsub(hitType, 1, 1)) .. strsub(hitType, 2)
 			DB:DamageTaken(Player, envName, 1, 0, 0, 0, 0, 0, r.amount, "Environment", 0, 0)
 			DB:DeathHistory(Player, "Environment", envName, r.amount, 1, 0, 0, 0)
 			if hitType == "lava" then DB:AddSpellSchool("Lava","fire") end
@@ -1238,7 +1238,7 @@ function DPSMate.Parser:FriendlyPlayerHits(msg)
 		-- Try environment damage patterns
 		hitType, r = CP:TryMatch(clean, CP.envDmgOther)
 		if hitType then
-			local envName = hitType:sub(1,1):upper() .. hitType:sub(2)
+			local envName = strupper(strsub(hitType, 1, 1)) .. strsub(hitType, 2)
 			DB:DamageTaken(r.source, envName, 1, 0, 0, 0, 0, 0, r.amount, "Environment", 0, 0)
 			DB:DeathHistory(r.source, "Environment", envName, r.amount, 1, 0, 0, 0)
 			if hitType == "lava" then DB:AddSpellSchool("Lava","fire") end
