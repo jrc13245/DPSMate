@@ -2102,7 +2102,7 @@ function DPSMate.DB:Dispels(cause, Dname, target, ability)
 			}
 		end
 		gen = DPSDispel[cat][cause]
-		if not gen["i"] then
+		if not gen["i"] or not gen["i"][1] then
 			gen["i"] = {[1] = 0, [2] = {}}
 		end
 		if not gen[Dname] then
