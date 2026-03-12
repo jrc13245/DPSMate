@@ -574,6 +574,27 @@ function DPSMate.Parser:AssociateShaman(name, old, update)
 	end
 	return old
 end
+
+-- Qualify a pet/totem source name with its owner for disambiguation.
+-- When _petOwner is set (PET_ events), use the player as owner.
+-- Otherwise, look up the petToOwnerMap for single-owner pets.
+function DPSMate.Parser:QualifyPetSource(source)
+	if self._petOwner then
+		return source .. " (" .. self._petOwner .. ")"
+	end
+	if self.petToOwnerMap and self.petToOwnerMap[source] then
+		local count, singleOwner = 0, nil
+		for o, _ in pairs(self.petToOwnerMap[source]) do
+			count = count + 1
+			singleOwner = o
+		end
+		if count == 1 then
+			return source .. " (" .. singleOwner .. ")"
+		end
+	end
+	return source
+end
+
 -- The totem aura just reports a removed event in the chat.
 -- Maybe we can guess here?
 local UnitDebuff = UnitDebuff

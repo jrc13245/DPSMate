@@ -872,68 +872,90 @@ if (GetLocale() == "ruRU") then
 	----------------------------------------------------------------------------------
 	
 	function DPSMate.Parser:PetHits(msg)
+		self._petOwner = self.player
 		for a,c,d,b,e in strgfind(msg, "(.-) наносит (.-) (%d+) ед%. урона(.*)%.(.*)") do
+			a = self:QualifyPetSource(a)
 			t = {false, false, false, false, tnbr(d)}
 			if b~=": критический удар" then t[3]=1;t[4]=0 end
 			if e=="(пришелся вскользь)" then t[1]=1;t[3]=0;t[4]=0 elseif e~="" then t[2]=1;t[3]=0;t[4]=0 end
 			if c=="вам" then c=self.player end
 			DB:EnemyDamage(true, DPSMateEDT, a, "АвтоАтака", t[3] or 0, t[4] or 1, 0, 0, 0, 0, t[5], c, t[2] or 0, t[1] or 0)
 			DB:DamageDone(a, "АвтоАтака", t[3] or 0, t[4] or 1, 0, 0, 0, 0, t[5], t[1] or 0, t[2] or 0)
+			self._petOwner = nil
 			return
 		end
+		self._petOwner = nil
 	end
-	
+
 	function DPSMate.Parser:PetMisses(msg)
-		for a,b in strgfind(msg, "(.-) не попадает по (.+)%.") do 
+		self._petOwner = self.player
+		for a,b in strgfind(msg, "(.-) не попадает по (.+)%.") do
+			a = self:QualifyPetSource(a)
 			if b=="вам" then b=self.player end
 			DB:EnemyDamage(true, DPSMateEDT, a, "АвтоАтака", 0, 0, 1, 0, 0, 0, 0, b, 0, 0)
 			DB:DamageDone(a, "АвтоАтака", 0, 0, 1, 0, 0, 0, 0, 0, 0)
+			self._petOwner = nil
 			return
 		end
-		for b,c,a in strgfind(msg, "(.+) (.-) атаку (.+)%.") do 
-			if c=="парирует" or c=="парируете" then t[1]=1 end 
+		for b,c,a in strgfind(msg, "(.+) (.-) атаку (.+)%.") do
+			a = self:QualifyPetSource(a)
+			if c=="парирует" or c=="парируете" then t[1]=1 end
 			if b=="Вы" then b=self.player end
 			DB:EnemyDamage(true, DPSMateEDT, a, "АвтоАтака", 0, 0, 0, t[1] or 0, t[2] or 0, 0, 0, b, t[3] or 0, 0)
 			DB:DamageDone(a, "АвтоАтака", 0, 0, 0, t[1] or 0, t[2] or 0, 0, 0, 0, t[3] or 0)
+			self._petOwner = nil
 			return
 		end
-		for b,c,a in strgfind(msg, "(.+) (.-) от атаки (.+)%.") do 
-			if c=="dodges" or c=="dodge" then t[2]=1 end 
+		for b,c,a in strgfind(msg, "(.+) (.-) от атаки (.+)%.") do
+			a = self:QualifyPetSource(a)
+			if c=="dodges" or c=="dodge" then t[2]=1 end
 			if b=="Вы" then b=self.player end
 			DB:EnemyDamage(true, DPSMateEDT, a, "АвтоАтака", 0, 0, 0, t[1] or 0, t[2] or 0, 0, 0, b, t[3] or 0, 0)
 			DB:DamageDone(a, "АвтоАтака", 0, 0, 0, t[1] or 0, t[2] or 0, 0, 0, 0, t[3] or 0)
+			self._petOwner = nil
 			return
 		end
-		for b,c,a in strgfind(msg, "(.+) (.-) атаку (.+)%.") do 
-			if c=="блокирует" or c=="блокируете" then t[3]=1 end 
+		for b,c,a in strgfind(msg, "(.+) (.-) атаку (.+)%.") do
+			a = self:QualifyPetSource(a)
+			if c=="блокирует" or c=="блокируете" then t[3]=1 end
 			if b=="Вы" then b=self.player end
 			DB:EnemyDamage(true, DPSMateEDT, a, "АвтоАтака", 0, 0, 0, t[1] or 0, t[2] or 0, 0, 0, b, t[3] or 0, 0)
 			DB:DamageDone(a, "АвтоАтака", 0, 0, 0, t[1] or 0, t[2] or 0, 0, 0, 0, t[3] or 0)
+			self._petOwner = nil
 			return
 		end
+		self._petOwner = nil
 	end
-	
+
 	function DPSMate.Parser:PetSpellDamage(msg)
-		for a,f,c,d,e,b in strgfind(msg, "\"(.+)\" (.-) наносит (.+) (%d+) ед%. урона([^:]*)(.*)%.%s?(.*)") do 
+		self._petOwner = self.player
+		for a,f,c,d,e,b in strgfind(msg, "\"(.+)\" (.-) наносит (.+) (%d+) ед%. урона([^:]*)(.*)%.%s?(.*)") do
+			f = self:QualifyPetSource(f)
 			t = {tnbr(d), false, false, false}
 			if b~=": критический эффект" then t[2]=1;t[3]=0 end
 			if strfind(e, "заблокировано") then t[4]=1;t[2]=0;t[3]=0 end
 			if c=="вам" then c=self.player end
 			DB:EnemyDamage(true, DPSMateEDT, f, a,  t[2] or 0, t[3] or 1, 0, 0, 0, 0, t[1], c, t[4] or 0, 0)
 			DB:DamageDone(f, a, t[2] or 0, t[3] or 1, 0, 0, 0, 0, t[1], 0, t[4] or 0)
+			self._petOwner = nil
 			return
 		end
-		for c,b,a in strgfind(msg, "(.+) сопротивляется заклинанию \"(.+)\" (.-)%.") do 
+		for c,b,a in strgfind(msg, "(.+) сопротивляется заклинанию \"(.+)\" (.-)%.") do
+			a = self:QualifyPetSource(a)
 			DB:EnemyDamage(true, DPSMateEDT, a, b,  0, 0, 0, 0, 0, 1, 0, c, t[4] or 0, 0)
 			DB:DamageDone(a, c, 0, 0, 0, 0, 0, 1, 0, 0, 0)
+			self._petOwner = nil
 			return
 		end
-		for b,a in strgfind(msg, "Вы сопротивляетесь заклинанию \"(.+)\" (.-)%.") do 
+		for b,a in strgfind(msg, "Вы сопротивляетесь заклинанию \"(.+)\" (.-)%.") do
+			a = self:QualifyPetSource(a)
 			c=self.player
 			DB:EnemyDamage(true, DPSMateEDT, a, b,  0, 0, 0, 0, 0, 1, 0, c, t[4] or 0, 0)
 			DB:DamageDone(a, c, 0, 0, 0, 0, 0, 1, 0, 0, 0)
+			self._petOwner = nil
 			return
 		end
+		self._petOwner = nil
 		for c,a,f in strgfind(msg, "(.+) уклоняется от заклинания \"(.+)\" (.-)%.") do 
 			DB:EnemyDamage(true, DPSMateEDT, f, a, 0, 0, 0, 0, 1, 0, 0, c, 0, 0)
 			DB:DamageDone(f, a, 0, 0, 0, 0, 1, 0, 0, 0, 0)

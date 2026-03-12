@@ -825,14 +825,16 @@ DPSMate.DB.PLAYER_TARGET_CHANGED = function()
 			DPSMateUser[name][5] = ""
 		end
 		if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" then
-			this:BuildUser(pet, nil)
-			DPSMateUser[pet][4] = true
-			DPSMateUser[name][5] = pet
-			DPSMateUser[pet][6] = DPSMateUser[name][1]
+			local petKey = pet .. " (" .. name .. ")"
+			this:BuildUser(petKey, nil)
+			-- BuildUser with qualified name already sets [4], [6], [5]
 		end
-		if DPSMate.Parser.TargetParty[pet] then
-			DPSMateUser[pet][4] = false
-			DPSMateUser[pet][6] = ""
+		if pet and DPSMate.Parser.TargetParty[pet] then
+			local petKey = pet .. " (" .. name .. ")"
+			if DPSMateUser[petKey] then
+				DPSMateUser[petKey][4] = false
+				DPSMateUser[petKey][6] = ""
+			end
 			DPSMateUser[name][5] = ""
 		end
 	end
@@ -873,6 +875,7 @@ function DPSMate.DB:OnGroupUpdate()
 	local type = "raid"
 	local num = GetNumRaidMembers()
 	DPSMate.Parser.TargetParty = {}
+	DPSMate.Parser.petToOwnerMap = {}
 	if num<=0 then
 		type = "party"
 		num = GetNumPartyMembers()
@@ -918,15 +921,23 @@ function DPSMate.DB:OnGroupUpdate()
 			DPSMateUser[name][4] = false
 			DPSMateUser[name][6] = nil
 			if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
-				if not DPSMateUser[pet] then
+				-- Use owner-qualified key so each owner's pet/totem is tracked separately
+				local petKey = pet .. " (" .. name .. ")"
+				if not DPSMateUser[petKey] then
 					self.userlen = self.userlen + 1
-					DPSMateUser[pet] = {[1] = self.userlen}
+					DPSMateUser[petKey] = {[1] = self.userlen}
 					DPSMate.UserId = nil
 				end
-				DPSMateUser[pet][4] = true
-				DPSMateUser[name][5] = pet
-				DPSMateUser[pet][6] = DPSMateUser[name][1]
+				DPSMateUser[petKey][4] = true
+				DPSMateUser[name][5] = petKey
+				DPSMateUser[petKey][6] = DPSMateUser[name][1]
+				DPSMate.Parser.TargetParty[petKey] = type.."pet"..i
 				DPSMate.Parser.TargetParty[pet] = type.."pet"..i
+				-- Track pet-to-owner mapping for combat log source disambiguation
+				if not DPSMate.Parser.petToOwnerMap[pet] then
+					DPSMate.Parser.petToOwnerMap[pet] = {}
+				end
+				DPSMate.Parser.petToOwnerMap[pet][name] = true
 			elseif pet and groupPlayerNames[pet] then
 				DPSMateUser[name][5] = ""
 			end
@@ -957,15 +968,21 @@ function DPSMate.DB:OnGroupUpdate()
 		DPSMate.UserId = nil
 	end
 	if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
-		if not DPSMateUser[pet] then
+		local petKey = pet .. " (" .. name .. ")"
+		if not DPSMateUser[petKey] then
 			self.userlen = self.userlen + 1
-			DPSMateUser[pet] = {[1] = self.userlen}
+			DPSMateUser[petKey] = {[1] = self.userlen}
 			DPSMate.UserId = nil
 		end
-		DPSMateUser[pet][4] = true
-		DPSMateUser[name][5] = pet
-		DPSMateUser[pet][6] = DPSMateUser[name][1]
+		DPSMateUser[petKey][4] = true
+		DPSMateUser[name][5] = petKey
+		DPSMateUser[petKey][6] = DPSMateUser[name][1]
+		DPSMate.Parser.TargetParty[petKey] = "pet"
 		DPSMate.Parser.TargetParty[pet] = "pet"
+		if not DPSMate.Parser.petToOwnerMap[pet] then
+			DPSMate.Parser.petToOwnerMap[pet] = {}
+		end
+		DPSMate.Parser.petToOwnerMap[pet][name] = true
 	elseif pet and groupPlayerNames[pet] then
 		DPSMateUser[name][5] = ""
 	end
@@ -975,10 +992,20 @@ end
 
 function DPSMate.DB:BuildUser(Dname, Dclass)
 	if not Dname then Dname = "?!NIL Name?!" end
-	local _,_, pet,owner = strfind(Dname,"(.+)%s%((.+)%)")
-	if pet then
-		Dname = pet
+	-- Auto-qualify raw pet/totem names via petToOwnerMap (single-owner only)
+	local pom = DPSMate.Parser.petToOwnerMap
+	if pom and pom[Dname] then
+		local count, singleOwner = 0, nil
+		for o, _ in pairs(pom[Dname]) do
+			count = count + 1
+			singleOwner = o
+		end
+		if count == 1 then
+			Dname = Dname .. " (" .. singleOwner .. ")"
+		end
 	end
+	local _,_, pet,owner = strfind(Dname,"(.+)%s%((.+)%)")
+	-- Keep full "PetName (OwnerName)" as key for per-owner disambiguation
 	if not DPSUser[Dname] then
 		self.userlen = self.userlen + 1
 		DPSUser[Dname] = {

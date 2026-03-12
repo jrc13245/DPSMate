@@ -921,7 +921,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 		if hitType then
 			local hit, crit = 0, 0
 			if hitType == "hit" then hit = 1 else crit = 1 end
-			local source = r.source
+			local source = self:QualifyPetSource(r.source)
 			local ability = r.ability
 			local target = r.target
 			local amount = r.amount
@@ -949,7 +949,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 		-- Try other spell misses
 		hitType, r = CP:TryMatch(clean, CP.otherSpellMiss)
 		if hitType then
-			local source = r.source
+			local source = self:QualifyPetSource(r.source)
 			local ability = r.ability
 			local target = r.target
 			if target == "you" then target = Player end
@@ -1034,7 +1034,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 					end
 
 					i,j = strfind(msg, " 's ", 1, true);
-					local src = strsub(msg, p+1, i-1)
+					local src = self:QualifyPetSource(strsub(msg, p+1, i-1))
 					i = strfind(msg, ".", j+1, true)
 					local ab = strsub(msg, j+1, i-1)
 					DB:EnemyDamage(true, nil, src, ab, 0, 0, 0, 0, 0, 1, 0, tar, 0, 0)
@@ -1043,7 +1043,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 				end
 
 				local ability;
-				local source = strsub(msg, 1, j-4);
+				local source = self:QualifyPetSource(strsub(msg, 1, j-4));
 				k = j+1
 				
 				ability, choice, k = GetNextWord(msg, k, FPDList, false)
@@ -1207,7 +1207,7 @@ function DPSMate.Parser:FriendlyPlayerHits(msg)
 		if hitType then
 			local hit, crit = 0, 0
 			if hitType == "hit" then hit = 1 else crit = 1 end
-			local source = r.source
+			local source = self:QualifyPetSource(r.source)
 			local target = r.target
 			local amount = r.amount
 
@@ -1235,7 +1235,7 @@ function DPSMate.Parser:FriendlyPlayerHits(msg)
 		-- Try other melee misses
 		local hitType2, r2 = CP:TryMatch(clean, CP.otherMeleeMiss)
 		if hitType2 then
-			local source = r2.source
+			local source = self:QualifyPetSource(r2.source)
 			local target = r2.target
 			if target == "you" then target = Player end
 			if hitType2 == "miss" then
@@ -1275,6 +1275,7 @@ function DPSMate.Parser:FriendlyPlayerHits(msg)
 		local debug = DPSMate.Debug and DPSMate.Debug:Store("7: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("7: Event not parsed yet, inform Shino! => "..msg))
 		return
 	end
+	source = self:QualifyPetSource(source)
 	if choice < 3 or choice == 7 or choice == 8 then
 		local hit, crit = 0, 0
 		if choice == 1 then hit = 1 else crit = 1 end
@@ -1354,6 +1355,7 @@ function DPSMate.Parser:FriendlyPlayerMisses(msg)
 		local debug = DPSMate.Debug and DPSMate.Debug:Store("8: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("8: Event not parsed yet, inform Shino! => "..msg))
 		return
 	end
+	source = self:QualifyPetSource(source)
 	if choice == 1 then
 		i, j = strfind(msg, ".", k, true)
 		local target = strsub(msg, k, i-1);
@@ -2570,13 +2572,19 @@ function DPSMate.Parser:HostilePlayerSpellDamageInterrupts(msg)
 end
 
 function DPSMate.Parser:PetHits(msg)
+	self._petOwner = self.player
 	self:FriendlyPlayerHits(msg)
+	self._petOwner = nil
 end
 
 function DPSMate.Parser:PetMisses(msg)
+	self._petOwner = self.player
 	self:FriendlyPlayerMisses(msg)
+	self._petOwner = nil
 end
 
 function DPSMate.Parser:PetSpellDamage(msg)
+	self._petOwner = self.player
 	self:FriendlyPlayerDamage(msg)
+	self._petOwner = nil
 end
