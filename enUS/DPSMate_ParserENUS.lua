@@ -2055,6 +2055,35 @@ function DPSMate.Parser:SpellSelfBuff(msg)
 	local nextword, choice;
 	_, choice, k = GetNextWord(msg, k, SSBChoices, true)
 	if choice == -1 then
+		-- Fallback: <Name> gains <amount> <Resource> from <Ability>.
+		i,j = strfind(msg, " gains ", 1, true)
+		if i then
+			local source = strsub(msg, 1, i-1)
+			k = j+1
+			nextword, choice, k = GetNextWord(msg, k, SSBChoices3, false)
+			if choice > 0 then
+				i,j = strfind(msg, ".", k, true)
+				if i then
+					local ability = strsub(msg, k, i-1)
+					if choice < 4 then
+						DB:RegisterNextSwing(source, tnbr(nextword), ability)
+						DB:BuildBuffs(source, source, ability, true)
+						DB:DestroyBuffs(source, ability)
+					elseif choice == 4 then
+						if Procs[ability] and not OtherExceptions[ability] then
+							DB:BuildBuffs(source, source, ability, true)
+							DB:DestroyBuffs(source, ability)
+						end
+					elseif choice == 5 then
+						if Procs[ability] then
+							DB:BuildBuffs(source, source, ability, true)
+							DB:DestroyBuffs(source, ability)
+						end
+					end
+				end
+				return
+			end
+		end
 		local debug = DPSMate.Debug and DPSMate.Debug:Store("17: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("17: Event not parsed yet, inform Shino! => "..msg))
 		return
 	end
