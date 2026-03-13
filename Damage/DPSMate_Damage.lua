@@ -167,7 +167,7 @@ function DPSMate.Modules.Damage:GetSettingValues(arr, cbt, k,ecbt)
 		if DPSMateSettings["columnsdmg"][1] then str[1] = " "..DPSMate:Commas(dmg, k)..p; strt[2] = DPSMate:Commas(tot, k)..pt end
 		if DPSMateSettings["columnsdmg"][2] and validCbt then str[2] = "("..strformat("%.1f", (dmg/cbt))..p..")"; strt[1] = "("..strformat("%.1f", (tot/cbt))..pt..") " end
 		if DPSMateSettings["columnsdmg"][3] then str[3] = " ("..strformat("%.1f", 100*dmgr/totr).."%)" end
-		if DPSMateSettings["columnsdmg"][4] then local ev = ecbt[pname] or cbt; if ev and ev > 0.001 then str[4] = " ("..strformat("%.1f", dmg/ev)..p..")" end end
+		if DPSMateSettings["columnsdmg"][4] then local ev = (type(ecbt)=="table" and ecbt[pname]) or cbt; if ev and ev > 0.001 then str[4] = " ("..strformat("%.1f", dmg/ev)..p..")" end end
 		tinsert(name, a[cat])
 		tinsert(value, str[2]..str[1]..str[4]..str[3])
 		tinsert(perc, 100*(dmgr/sortr))
