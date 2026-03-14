@@ -803,7 +803,6 @@ DPSMate.DB.PLAYER_TARGET_CHANGED = function()
 		if not name then return end
 		local pet = UnitName("targetpet")
 		local classLoc, class = UnitClass("target")
-		class = class or classLoc
 		if not class then return end
 		local fac = UnitFactionGroup("target") or ""
 		local level = UL("target")
@@ -912,9 +911,9 @@ function DPSMate.DB:OnGroupUpdate()
 				DPSMateUser[name] = {[1] = self.userlen}
 				DPSMate.UserId = nil
 			end
-			local resolvedClass = classEng or classLoc
-			if resolvedClass then
-				DPSMateUser[name][2] = strlower(resolvedClass)
+
+			if classEng then
+				DPSMateUser[name][2] = strlower(classEng)
 			elseif not DPSMateUser[name][2] then
 				allNamesResolved = false
 			end
