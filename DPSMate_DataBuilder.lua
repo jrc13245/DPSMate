@@ -966,6 +966,10 @@ function DPSMate.DB:OnGroupUpdate()
 		DPSMateUser[name] = {[1] = self.userlen}
 		DPSMate.UserId = nil
 	end
+	local _, playerClassEng = UnitClass("player")
+	if playerClassEng then
+		DPSMateUser[name][2] = strlower(playerClassEng)
+	end
 	if pet and pet ~= DPSMate.L["unknown"] and pet ~= "" and not groupPlayerNames[pet] then
 		local petKey = pet .. " (" .. name .. ")"
 		if not DPSMateUser[petKey] then
