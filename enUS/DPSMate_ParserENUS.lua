@@ -674,6 +674,8 @@ function DPSMate.Parser:SelfSpellDMG(msg)
 		-- Last resort: try periodic damage via legacy parser
 		if strfind(msg, " suffers ", 1, true) then
 			self:PeriodicDamage(msg)
+		elseif strfind(msg, "is immune", 1, true) then
+			return
 		else
 			local debug = DPSMate.Debug and DPSMate.Debug:Store("3: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("3: Event not parsed yet, inform Shino! => "..msg))
 		end
@@ -1048,6 +1050,7 @@ function DPSMate.Parser:FriendlyPlayerDamage(msg)
 				
 				ability, choice, k = GetNextWord(msg, k, FPDList, false)
 				if choice == -1 then
+					if strfind(msg, "is immune", 1, true) then return end
 					local debug = DPSMate.Debug and DPSMate.Debug:Store("6: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("6: Event not parsed yet, inform Shino! => "..msg))
 					return
 				end
@@ -1576,6 +1579,7 @@ function DPSMate.Parser:CreatureVsSelfSpellDamage(msg)
 	local nextword, choice;
 	nextword, choice, k = GetNextWord(msg, k, CVSSDChoices, false)
 	if choice == -1 then
+		if strfind(msg, " damaged.", 1, true) or strfind(msg, "is immune", 1, true) then return end
 		local debug = DPSMate.Debug and DPSMate.Debug:Store("11: Event not parsed yet => "..msg) or (DPSMate.ShowMsg and DPSMate:SendMessage("11: Event not parsed yet, inform Shino! => "..msg))
 		return
 	end
