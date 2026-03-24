@@ -228,7 +228,7 @@ function DPSMate.Modules.DPS:ShowTooltip(user,k)
 			-- Aggregate EDT from all pets for this enemy
 			local petTotal = 0
 			for _, pid in pairs(petIds) do
-				if val[pid] and val[pid]["i"] > 0 then
+				if val[pid] and (val[pid]["i"] or 0) > 0 then
 					petTotal = petTotal + val[pid]["i"]
 				end
 			end
