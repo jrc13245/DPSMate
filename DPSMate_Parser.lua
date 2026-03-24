@@ -635,22 +635,46 @@ DPSMate.Parser.CHAT_MSG_SPELL_AURA_GONE_SELF = function(arg1)
 	this:SpellAuraGoneSelf(arg1)
 end
 
+-- Dedup tracking: TWoW can fire the same combat log message through multiple
+-- event channels (e.g. both PARTY_BUFF and FRIENDLYPLAYER_BUFF), causing
+-- double-counted healing/buffs. Track last processed message+time per handler
+-- group. Using GetTime() ensures legitimate repeat ticks (e.g. HoTs with
+-- identical messages in different frames) are not incorrectly skipped.
+local lastBuffMsg, lastBuffTime = nil, 0
+local lastPeriodicBuffMsg, lastPeriodicBuffTime = nil, 0
+
 DPSMate.Parser.CHAT_MSG_SPELL_PERIODIC_PARTY_BUFFS = function(arg1)
+	local t = GetTime()
+	if lastPeriodicBuffMsg == arg1 and lastPeriodicBuffTime == t then return end
+	lastPeriodicBuffMsg = arg1
+	lastPeriodicBuffTime = t
 	this:SpellPeriodicFriendlyPlayerBuffs(arg1)
 	this:SpellPeriodicFriendlyPlayerBuffsAbsorb(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_PARTY_BUFF = function(arg1)
+	local t = GetTime()
+	if lastBuffMsg == arg1 and lastBuffTime == t then return end
+	lastBuffMsg = arg1
+	lastBuffTime = t
 	this:SpellHostilePlayerBuff(arg1)
 	this:SpellHostilePlayerBuffDispels(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_PERIODIC_HOSTILEPLAYER_BUFFS = function(arg1)
+	local t = GetTime()
+	if lastPeriodicBuffMsg == arg1 and lastPeriodicBuffTime == t then return end
+	lastPeriodicBuffMsg = arg1
+	lastPeriodicBuffTime = t
 	this:SpellPeriodicFriendlyPlayerBuffs(arg1)
 	this:SpellPeriodicFriendlyPlayerBuffsAbsorb(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF = function(arg1)
+	local t = GetTime()
+	if lastBuffMsg == arg1 and lastBuffTime == t then return end
+	lastBuffMsg = arg1
+	lastBuffTime = t
 	this:SpellHostilePlayerBuff(arg1)
 	this:SpellHostilePlayerBuffDispels(arg1)
 	this:HostilePlayerSpellDamageInterrupts(arg1)
@@ -658,21 +682,37 @@ DPSMate.Parser.CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF = function(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_PERIODIC_FRIENDLYPLAYER_BUFFS = function(arg1)
+	local t = GetTime()
+	if lastPeriodicBuffMsg == arg1 and lastPeriodicBuffTime == t then return end
+	lastPeriodicBuffMsg = arg1
+	lastPeriodicBuffTime = t
 	this:SpellPeriodicFriendlyPlayerBuffs(arg1)
 	this:SpellPeriodicFriendlyPlayerBuffsAbsorb(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_FRIENDLYPLAYER_BUFF = function(arg1)
+	local t = GetTime()
+	if lastBuffMsg == arg1 and lastBuffTime == t then return end
+	lastBuffMsg = arg1
+	lastBuffTime = t
 	this:SpellHostilePlayerBuff(arg1)
 	this:SpellHostilePlayerBuffDispels(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS = function(arg1)
+	local t = GetTime()
+	if lastPeriodicBuffMsg == arg1 and lastPeriodicBuffTime == t then return end
+	lastPeriodicBuffMsg = arg1
+	lastPeriodicBuffTime = t
 	this:SpellPeriodicSelfBuff(arg1)
 	this:SpellPeriodicSelfBuffAbsorb(arg1)
 end
 
 DPSMate.Parser.CHAT_MSG_SPELL_SELF_BUFF = function(arg1)
+	local t = GetTime()
+	if lastBuffMsg == arg1 and lastBuffTime == t then return end
+	lastBuffMsg = arg1
+	lastBuffTime = t
 	this:SpellSelfBuff(arg1)
 	this:SpellSelfBuffDispels(arg1)
 end

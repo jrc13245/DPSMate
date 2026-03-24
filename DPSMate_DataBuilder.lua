@@ -2262,6 +2262,8 @@ function DPSMate.DB:Kick(cause, target, causeAbility, targetAbility)
 				[2] = {}
 			}
 		end
+		if not gen["i"][1] then gen["i"][1] = 0 end
+		if not gen["i"][2] then gen["i"][2] = {} end
 		if not gen[causeAbility] then
 			gen[causeAbility] = {}
 		end
